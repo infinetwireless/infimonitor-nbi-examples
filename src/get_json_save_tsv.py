@@ -14,9 +14,10 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--url', default = 'https://localhost/api/nbi/v1.beta/vectors/all/history', help = 'REST API URL')
 parser.add_argument('--token', required = True, help = 'REST API token')
+parser.add_argument('--file', required = True, help='Path to the tsv file')
 args = parser.parse_args()
 
-PAGE_SIZE = 1024
+PAGE_SIZE = 1024*16
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -36,14 +37,15 @@ def item_to_row(item, columnNames):
         return value if isinstance(value, str) else json.dumps(value)
     return map(extract_value, columnNames)
 
-writer = csv.writer(sys.stdout, dialect = 'excel-tab')
-columnNames = None
-for page in itertools.count():
-    items = get_json(page, PAGE_SIZE)
-    if not columnNames and items: 
-        columnNames = items[0].keys()
-        writer.writerow(columnNames)
-    for item in items:            
-        writer.writerow(item_to_row(item, columnNames))
-    if len(items) < PAGE_SIZE:
-        break
+with open(args.file, 'w') as f:
+	writer = csv.writer(f, dialect = 'excel-tab', lineterminator='\n')
+	columnNames = None
+	for page in itertools.count():
+		items = get_json(page, PAGE_SIZE)
+		if not columnNames and items: 
+			columnNames = items[0].keys()
+			writer.writerow(columnNames)
+		for item in items:            
+			writer.writerow(item_to_row(item, columnNames))
+		if len(items) < PAGE_SIZE:
+			break
