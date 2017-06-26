@@ -150,6 +150,8 @@ class Reporter:
         
     def makeReport(self, resultFile, hostsFile, linksFile, historyFile):
         self.wb = self.xl.Workbooks.Add()
+		while self.wb.Worksheets.Count <= 2:
+            self.wb.Worksheets.Add()
         self.reportSheet = self.wb.Worksheets(1)
         self.dataSheet = self.wb.Worksheets(2)
         self.reportSheet.Name = 'Report'
@@ -186,11 +188,10 @@ class Reporter:
                 
         # Handle history rows
         message('Reading {}'.format(historyFile))
-        lastRow = None
+
         bufferedRecordsMax = 1024
         bufferedRecordsCount = 0
         bufferedRecords = {}
-        
         with open(historyFile) as f:
             for row in Reader(f):
                 uuid = row['nmsObjectUuid']
