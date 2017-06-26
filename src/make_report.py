@@ -17,12 +17,10 @@ import win32com.client
 import MSO, MSE
 
 quiet = False
-outff = open("out.txt", 'w')
 
 def message(str):
     global quiet
     if not quiet:
-        outff.write('{}\n'.format(str))
         print(str)
         
 def merge(l1, l2):
@@ -74,8 +72,6 @@ def main():
 
     reporter = Reporter()
     reporter.makeReport(outputName, hostsTSV, linksTSV, historyTSV)
-    
-    outff.close()
 
 class Table:
     startCol = 0
@@ -150,7 +146,7 @@ class Reporter:
         
     def makeReport(self, resultFile, hostsFile, linksFile, historyFile):
         self.wb = self.xl.Workbooks.Add()
-		while self.wb.Worksheets.Count <= 2:
+        while self.wb.Worksheets.Count <= 2:
             self.wb.Worksheets.Add()
         self.reportSheet = self.wb.Worksheets(1)
         self.dataSheet = self.wb.Worksheets(2)
@@ -219,7 +215,6 @@ class Reporter:
                 
                 if bufferedRecordsCount > bufferedRecordsMax:
                     length, key = max([(len(val), key) for key, val in bufferedRecords.items()])
-                    message('cache length {}'.format(length))
                     dataStore.write(history[key[0]][key[1]][key[2]], bufferedRecords[key])
                     bufferedRecords.pop(key, None)
                     bufferedRecordsCount -= length
