@@ -17,10 +17,12 @@ import win32com.client
 import MSO, MSE
 
 quiet = False
+outff = open("out.txt", 'w')
 
 def message(str):
     global quiet
     if not quiet:
+        outff.write('{}\n'.format(str))
         print(str)
         
 def merge(l1, l2):
@@ -29,6 +31,13 @@ def merge(l1, l2):
         if i not in res:
             res.append(i)
     return res
+
+def convertTimestamp(str):
+    # Parse ISO 8601 timestamp
+    res = str.replace('Z','+00:00')
+    res = re.sub('([^.]+)(\.\d+)?([+-]\d\d):(\d\d)', '\g<1>\g<3>\g<4>', res)
+    parsed = datetime.strptime(res, "%Y-%m-%dT%H:%M:%S%z").astimezone()
+    return parsed.strftime('%Y.%m.%d %H:%M:%S')
 
 def main():
     parser = argparse.ArgumentParser()
@@ -65,51 +74,80 @@ def main():
 
     reporter = Reporter()
     reporter.makeReport(outputName, hostsTSV, linksTSV, historyTSV)
-
+    
+    outff.close()
 
 class Table:
     startCol = 0
     startRow = 0
     cols = 0
     rows = 0
+    
+    def __init__(self, col, row, cols, rows):
+        self.startCol = col
+        self.startRow = row
+        self.cols = cols
+        self.rows = rows
+    
+    def getColRange(self, ws, colNum):
+        col = self.startCol + colNum - 1
+        row1 = self.startRow
+        row2 = self.startRow + self.rows - 1
+        return ws.Range(ws.Cells(row1, col), ws.Cells(row2, col))
+    
+    def getRange(self, ws):
+        col1 = self.startCol
+        col2 = self.startCol + self.cols - 1
+        row1 = self.startRow
+        row2 = self.startRow + self.rows - 1
+        return ws.Range(ws.Cells(row1, col1), ws.Cells(row2, col2))
 
 class DataStore:
     lastColNum = 1
     dataSheet = None
+    lastTable = None
     
     def __init__(self, sheet):
         self.dataSheet = sheet
-    
+
     def allocateTable(self, cols):
         colNum = self.lastColNum
         rowNum = 1
         self.lastColNum += cols
-        newTable = Table()
-        newTable.startCol = colNum
-        newTable.startRow = rowNum
-        newTable.cols = cols
-        newTable.rows = 0
-        return newTable
-    
-    def writeRow(self, table, row):
-        colNum = table.startCol
-        rowNum = table.startRow + table.rows
-        for cell in row:
-            self.dataSheet.Cells(rowNum, colNum).Value = cell
-            colNum += 1
-        table.rows += 1
+        return Table(colNum, rowNum, cols, 0)
 
+    def write(self, table, rows):
+        addTable = Table(table.startCol, table.rows + 1, table.cols, len(rows))
+        addRange = addTable.getRange(self.dataSheet)
+        addRange.Value = rows
+        table.rows += len(rows)
+
+class Reader:
+    csvReader = None
+    csvHeader = None
+
+    def __init__(self, file):
+        self.csvReader = csv.reader(file, delimiter='\t', quoting=csv.QUOTE_NONE)
+        self.csvHeader = next(self.csvReader)
+            
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        arr = next(self.csvReader)
+        row = dict(zip(self.csvHeader, arr))
+        return row
+    
 class Reporter:
     GRAPH_HEIGHT = 300
     GRAPH_WIDTH = 500
     LABEL_DEPTH = 50
-    TIMESTAMP_FORMAT = '%Y.%m.%d %H:%M:%S'
 
     xl = wb = reportSheet = dataSheet = None
 
     def __init__(self):
         self.xl = win32com.client.gencache.EnsureDispatch('Excel.Application')
-    
+        
     def makeReport(self, resultFile, hostsFile, linksFile, historyFile):
         self.wb = self.xl.Workbooks.Add()
         self.reportSheet = self.wb.Worksheets(1)
@@ -129,67 +167,73 @@ class Reporter:
     def prepareData(self, hostsFile, linksFile, historyFile):
         hosts = {}
         links = {}
-        metadata = {}
-        dataStore = DataStore(self.dataSheet)
-
-        def convertTimestamp(str):
-            # Parse ISO 8601 timestamp
-            res = str.replace('Z','+00:00')
-            res = re.sub('([^.]+)(\.\d+)?([+-]\d\d):(\d\d)', '\g<1>\g<3>\g<4>', res)
-            parsed = datetime.strptime(res, "%Y-%m-%dT%H:%M:%S%z").astimezone()
-            return parsed.strftime(Reporter.TIMESTAMP_FORMAT)
-            
-        def readTSVByRow(file, fn):
-            with open(file) as f:
-                reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
-                header = next(reader)
-                for row in reader:
-                    fn(dict(zip(header, row)))
-
-        def handleHostRow(host):
-            hosts[host['uuid']] = host['name']
+        history = {}
+        dataStore = DataStore(self.dataSheet)      
         
-        def handleLinkRow(link):
-            links[link['uuid']] = link
-        
-        def handleHistoryRow(vector):
-            uuid = vector['nmsObjectUuid']
-            paramName = vector['parameterName']
-            paramIndex = vector['index']
-            
-            value = vector['value'] if vector['value'] != 'null' else ''
-            timestamp = convertTimestamp(vector['timestamp'])
-            rowData = [uuid, paramName, timestamp, value]
-
-            if uuid not in metadata:
-                metadata[uuid] = {}
-
-            if paramName not in metadata[uuid]:
-                metadata[uuid][paramName] = {}
-
-            if paramIndex not in metadata[uuid][paramName]:
-                metadata[uuid][paramName][paramIndex] = dataStore.allocateTable(len(rowData))
-
-            dataStore.writeRow(metadata[uuid][paramName][paramIndex], rowData)
-
+        # Handle hosts rows
         message('Reading {}'.format(hostsFile))
-        readTSVByRow(hostsFile, handleHostRow)
+        with open(hostsFile) as f:
+            for row in Reader(f):
+                hosts[row['uuid']] = row['name']
+                
+
+        # Handle links rows
         message('Reading {}'.format(linksFile))
-        readTSVByRow(linksFile, handleLinkRow)
+        with open(linksFile) as f:
+            for row in Reader(f):
+                links[row['uuid']] = row
+
+                
+        # Handle history rows
         message('Reading {}'.format(historyFile))
-        readTSVByRow(historyFile, handleHistoryRow)
+        lastRow = None
+        bufferedRecordsMax = 1024
+        bufferedRecordsCount = 0
+        bufferedRecords = {}
         
-        return hosts, links, metadata
+        with open(historyFile) as f:
+            for row in Reader(f):
+                uuid = row['nmsObjectUuid']
+                paramName = row['parameterName']
+                paramIndex = row['index']
+                value = row['value'] if row['value'] != 'null' else ''
+                timestamp = convertTimestamp(row['timestamp'])
+                
+                data = [timestamp, value]
+
+                if uuid not in history:
+                    history[uuid] = {}
+
+                if paramName not in history[uuid]:
+                    history[uuid][paramName] = {}
+
+                if paramIndex not in history[uuid][paramName]:
+                    history[uuid][paramName][paramIndex] = dataStore.allocateTable(len(data))
+                
+                if (uuid, paramName, paramIndex) not in bufferedRecords:
+                    bufferedRecords[(uuid, paramName, paramIndex)] = []
+                    
+                bufferedRecords[(uuid, paramName, paramIndex)].append(data)
+                bufferedRecordsCount += 1
+                
+                if bufferedRecordsCount > bufferedRecordsMax:
+                    length, key = max([(len(val), key) for key, val in bufferedRecords.items()])
+                    message('cache length {}'.format(length))
+                    dataStore.write(history[key[0]][key[1]][key[2]], bufferedRecords[key])
+                    bufferedRecords.pop(key, None)
+                    bufferedRecordsCount -= length
+            
+            for key, val in bufferedRecords.items():
+                dataStore.write(history[key[0]][key[1]][key[2]], val)
+
+            bufferedRecords = {}
+            bufferedRecordsCount = 0
+            
+        return hosts, links, history
     
-    def drawGraphs(self, hosts, links, metadata):
+    def drawGraphs(self, hosts, links, history):
         rs = self.reportSheet
         ds = self.dataSheet
-        
-        def getColRange(table, colNum):
-            col = table.startCol + colNum - 1
-            row1 = table.startRow
-            row2 = table.startRow + table.rows - 1
-            return ds.Range(ds.Cells(row1, col), ds.Cells(row2, col))
         
         def drawLabel(name, text, upward, left, top, width , height):
             shp = rs.Shapes.AddShape(MSO.constants.msoShapeRectangle, left, top, width, height)
@@ -214,8 +258,8 @@ class Reporter:
         allParameters = []
         linksWithParameters = []
         for _, l in links.items():
-            vectorAMetadata = metadata.get(l['vectorAUuid'], {})
-            vectorBMetadata = metadata.get(l['vectorBUuid'], {})
+            vectorAMetadata = history.get(l['vectorAUuid'], {})
+            vectorBMetadata = history.get(l['vectorBUuid'], {})
             mergedVectorParams = merge(list(vectorAMetadata.keys()), list(vectorBMetadata.keys()))
             if (len(mergedVectorParams)):
                 allParameters = merge(allParameters, mergedVectorParams)
@@ -235,8 +279,8 @@ class Reporter:
             linkName = '{} <-> {}'.format(h1Name, h2Name)
             linkUuid = link['uuid']
  
-            vectorAMetadata = metadata.get(link['vectorAUuid'], {})
-            vectorBMetadata = metadata.get(link['vectorBUuid'], {})
+            vectorAMetadata = history.get(link['vectorAUuid'], {})
+            vectorBMetadata = history.get(link['vectorBUuid'], {})
             
             message('Creating graphs for {} link ({} of {})'.format(linkName, linkNum + 1, len(linksWithParameters)))
             drawLabel(linkUuid, linkName, True, 0, topOffset, Reporter.LABEL_DEPTH, Reporter.GRAPH_HEIGHT)
@@ -251,8 +295,8 @@ class Reporter:
                 # Append vector A data
                 if paramName in vectorAMetadata:
                     for index, table in vectorAMetadata[paramName].items():
-                        xRng = getColRange(table, 3)
-                        yRng = getColRange(table, 4)
+                        xRng = table.getColRange(ds, 1)
+                        yRng = table.getColRange(ds, 2)
                     
                         graphData.append({
                             'lineName': 'vector A ({})'.format(index),
@@ -263,8 +307,8 @@ class Reporter:
                 # Append vector B data
                 if paramName in vectorBMetadata:
                     for index, table in vectorBMetadata[paramName].items():
-                        xRng = getColRange(table, 3)
-                        yRng = getColRange(table, 4)
+                        xRng = table.getColRange(ds, 1)
+                        yRng = table.getColRange(ds, 2)
                         
                         graphData.append({
                             'lineName': 'vector B ({})'.format(index),
