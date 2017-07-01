@@ -21,6 +21,7 @@ PAGE_SIZE = 1024*16
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+
 def get_json(page, size):
     response = requests.get(args.url,
         params = {'page': page, 'size': size},
@@ -31,11 +32,12 @@ def get_json(page, size):
     response.raise_for_status()
     return response.json(object_pairs_hook = OrderedDict)
 
-def item_to_row(item, columnNames):
-    def extract_value(columnName):
-        value = item[columnName]
+
+def item_to_row(item, column_names):
+
+    def extract_value(column_name):
+        value = item[column_name]
         return value if isinstance(value, str) else json.dumps(value)
-    return map(extract_value, columnNames)
 
 with open(args.file, 'w') as f:
 	writer = csv.writer(f, dialect = 'excel-tab', lineterminator='\n')
