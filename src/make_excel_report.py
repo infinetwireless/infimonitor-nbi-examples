@@ -14,7 +14,7 @@ import win32com.client
 
 # Import dynamically generated com interface modules
 # for Microsoft Office Object Library and Microsoft Excel Object Library
-import MSO, MSE
+import ms.MSO, ms.MSE
 
 quiet = False
 
