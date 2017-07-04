@@ -1,3 +1,6 @@
+"""
+See original at https://github.com/javiljoen/lttb.py
+"""
 import numpy as np
 
 
@@ -18,7 +21,7 @@ def downsample(data, n_out):
 
     Constraints
     -----------
-      - ncols(data) == 2
+      - ncols(data) >= 2
       - 3 <= n_out <= nrows(data)
       - ``data`` should be sorted on the first column.
 
@@ -31,7 +34,8 @@ def downsample(data, n_out):
     if data.shape[1] < 2:
         raise ValueError('data should have at least 2 columns')
 
-    if any(data[:, 0] != np.sort(data[:, 0])):
+    # if any(data[:, 0] < np.sort(data[:, 0])):
+    if any(data[0:len(data) - 1, 0] != data[1:, 0]):
         raise ValueError('data should be sorted on first column')
 
     if n_out > data.shape[0]:
