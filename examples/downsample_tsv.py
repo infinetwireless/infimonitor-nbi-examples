@@ -2,12 +2,17 @@ import argparse
 import csv
 import re
 from datetime import datetime as dt
+from heapq import heappush, heappop, heapify
+
+import numpy as np
+
+from examples.lttb import downsample as lttb_downsample
 
 GAP_VALUE = 'null'
 parser = argparse.ArgumentParser()
 parser.add_argument('--input', required=True)
 parser.add_argument('--output', required=True)
-parser.add_argument('--downsample-to', type=int, default='10')
+parser.add_argument('--downsample-to', type=int, default='100')
 # args = parser.parse_args()
 args = parser.parse_args(['--input', '../out/vectors.tsv', '--output', '../out/downsampled_vectors.tsv'])
 
@@ -25,7 +30,7 @@ def parse_datetime(datetime_str):
 def read_series(file_name, headers_processor, series_processor):
     with open(file_name, 'rt') as csv_file:
         reader = csv.reader(csv_file, dialect='excel-tab')
-        series_processor(reader, headers_processor, series_processor)
+        _read_series(reader, headers_processor, series_processor)
 
 
 def _read_series(reader, headers_processor, series_processor):
@@ -65,53 +70,79 @@ def split_by_gaps(is_gap, series):
     return parts
 
 
-class TimestampedValue(list):
-    def __init__(self, datetime_value):
-        list.__init__(self)
-        self.append(parse_datetime(datetime_value[0]).timestamp())
-        self.append(None if datetime_value[1] == GAP_VALUE else float(datetime_value[1]))
-        self.original = datetime_value
-
-    def is_gap(self):
-        return not self[1]
-
-
-class SeriesPart:
+class WrappedSeriesPart:
     def __init__(self, series_part):
-        self.series_part = series_part
-        self.boundary_points = 1 if len(series_part) == 1 else 2
+        self.original_series_part = series_part
+        self.np_series_part = np.zeros((len(series_part), 3))
+        for i, datetime_value in enumerate(series_part):
+            self.np_series_part[i][0] = parse_datetime(datetime_value[0]).timestamp()
+            self.np_series_part[i][1] = None if datetime_value[1] == GAP_VALUE else float(datetime_value[1])
+            self.np_series_part[i][2] = i
+        self.boundary_points = min(len(series_part), 2)
         self.allocated_points = 0
 
     def duration(self):
-        return self.series_part[-1][0] - self.series_part[0][0]
+        return self.np_series_part[-1][0] - self.np_series_part[0][0] if self.np_series_part.shape[0] > 0 else 0
+
+    def density(self):
+        return (1 + self.allocated_points) / self.duration()
 
     def __lt__(self, other):
-        return self.allocated_points / self.duration() < other.allocated_points / other.duration()
+        return self.density() < other.density()
 
     def downsample(self):
+        num_source_points = len(self.original_series_part)
         num_target_points = self.boundary_points + self.allocated_points
-        if num_target_points < 3:
-            return self.series_part
-        else:
-            return lttb.downsample(self.series_part, num_target_points)
+
+        def _downsample():
+            if num_source_points <= num_target_points:
+                return self.np_series_part
+            if num_target_points >= 3:
+                return lttb_downsample(self.np_series_part, num_target_points)
+            if num_target_points == 2:
+                return np.array([self.np_series_part[0], self.np_series_part[-1]])
+            raise Exception("Can't downsample number of points from %d to %d" % (num_source_points, num_target_points))
+
+        def restore(timestamp_value_index):
+            return self.original_series_part[int(round(timestamp_value_index[2]))]
+
+        return list(map(restore, _downsample()))
+
+
+def distribute_points_among_series_parts(num_points, series_parts):
+    wrapped_series_parts = list(map(lambda s: WrappedSeriesPart(s), series_parts))
+    num_boundary_points = sum(map(lambda s: s.boundary_points, wrapped_series_parts))
+    series_parts_duration = sum(map(lambda s: s.duration(), wrapped_series_parts))
+    num_left_points = num_points - num_boundary_points
+    if num_left_points > 0 and series_parts_duration > 0:
+        points_by_duration = num_left_points / series_parts_duration
+        not_zero_duration_series_parts = list(filter(lambda s: s.boundary_points == 2, wrapped_series_parts))
+        for series_part in not_zero_duration_series_parts:
+            points = int(series_part.duration() * points_by_duration)
+            num_left_points -= points
+            series_part.allocated_points += points
+        if num_left_points > 0:
+            heap = list(not_zero_duration_series_parts)
+            heapify(heap)
+            for x in range(num_left_points):
+                series_part = heappop(heap)
+                series_part.allocated_points += 1
+                heappush(heap, series_part)
+    return wrapped_series_parts
 
 
 if __name__ == '__main__':
-    with open(args.output, 'wt') as csv_file:
+    with open(args.output, 'w') as csv_file:
         writer = csv.writer(csv_file, dialect='excel-tab')
-        read_series(args.input, writer.writerow, process_series)
 
-# min_points = len(series_continuous_parts) * 3 - 1  # 3 ponits in min part - start point, end point, gap
-#         max_points = sum(map(series_continuous_parts, lambda s: len(s) + 1)) - 1
-#         downsampled = lttb.lttb.downsample(np.array(series), args.downsample_to) \
-#             if len(series) > args.downsample_to \
-#             else series
-#         value = None if value == 'null' else
-#         if not value:
-#             continue
-#
-#
-#     for datetime in downsampled:
-#         writer.writerow([nms_object_uuid, parameter_name, datetime[0], index, datetime[1]])
-#
-#
+
+        def process_series(nms_object_uuid, parameter_name, index, series):
+            series_parts = split_by_gaps(lambda datetime_value: datetime_value[1] == GAP_VALUE, series)
+            wrapped_series_parts = distribute_points_among_series_parts(args.downsample_to, series_parts)
+            for wrapped_series_part in wrapped_series_parts:
+                downsampled_series_part = wrapped_series_part.downsample()
+                for datetime_value in downsampled_series_part:
+                    writer.writerow([nms_object_uuid, parameter_name, datetime_value[0], index, datetime_value[1]])
+
+
+        read_series(args.input, writer.writerow, process_series)

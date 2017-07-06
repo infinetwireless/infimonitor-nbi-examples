@@ -34,8 +34,8 @@ def downsample(data, n_out):
     if data.shape[1] < 2:
         raise ValueError('data should have at least 2 columns')
 
-    # if any(data[:, 0] < np.sort(data[:, 0])):
-    if any(data[0:len(data) - 1, 0] != data[1:, 0]):
+    #if any(data[:, 0] < np.sort(data[:, 0])):
+    if any(data[:-1, 0] > data[1:, 0]):
         raise ValueError('data should be sorted on first column')
 
     if n_out > data.shape[0]:
@@ -53,7 +53,7 @@ def downsample(data, n_out):
 
     # Prepare output array
     # First and last points are the same as in the input.
-    out = np.zeros((n_out, 2))
+    out = np.zeros((n_out, data.shape[1]))
     out[0] = data[0]
     out[len(out) - 1] = data[len(data) - 1]
 
