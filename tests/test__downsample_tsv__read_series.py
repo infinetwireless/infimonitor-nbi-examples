@@ -1,5 +1,5 @@
 import unittest
-from examples.downsample_tsv import _read_series
+from examples.downsample_tsv import read_series
 
 HEADER = ['nmsObjectUuid', 'parameterName', 'timestamp', 'index', 'value']
 DATETIME = list(map(lambda x: '2000-01-01T00:00:' + str(x).zfill(2) + 'Z', range(6)))
@@ -29,7 +29,7 @@ class DownsampleTSV_ReadSeries_Tests(unittest.TestCase):
                 [UUID2, PARAMETER_NAME2, DATETIME[5], 0, VALUE[5]]]
 
         headers, series = [], []
-        _read_series(iter(data), _headers_processor(headers), _series_processor(series))
+        read_series(iter(data), _headers_processor(headers), _series_processor(series))
 
         self.assertEqual(len(headers), 1)
         self.assertEqual(headers[0], HEADER)
@@ -46,7 +46,7 @@ class DownsampleTSV_ReadSeries_Tests(unittest.TestCase):
                 [UUID1, PARAMETER_NAME1, DATETIME[3], 1, VALUE[3]]]
 
         headers, series = [], []
-        _read_series(iter(data), _headers_processor(headers), _series_processor(series))
+        read_series(iter(data), _headers_processor(headers), _series_processor(series))
 
         self.assertEqual(len(headers), 1)
         self.assertEqual(headers[0], HEADER)
@@ -62,7 +62,7 @@ class DownsampleTSV_ReadSeries_Tests(unittest.TestCase):
                 [UUID1, PARAMETER_NAME1, DATETIME[3], 1, VALUE[3]]]
 
         headers, series = [], []
-        _read_series(iter(data), _headers_processor(headers), _series_processor(series))
+        read_series(iter(data), _headers_processor(headers), _series_processor(series))
 
         self.assertEqual(len(headers), 1)
         self.assertEqual(headers[0], HEADER)

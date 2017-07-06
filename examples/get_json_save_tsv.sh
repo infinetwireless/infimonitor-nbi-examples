@@ -8,6 +8,6 @@ TOKEN=aaa
 OUT_DIR=../out
 
 mkdir -p $OUT_DIR
-python3 get_json_save_tsv.py3 --token $TOKEN --url "$URL_BASE/vectors/all/history?timestampFromIncl=$FROM&timestampToExcl=$TO" > ./$OUT_DIR/vectors.tsv
-python3 get_json_save_tsv.py3 --token $TOKEN --url "$URL_BASE/links" > ./$OUT_DIR/links.tsv
-python3 get_json_save_tsv.py3 --token $TOKEN --url "$URL_BASE/hosts" > ./$OUT_DIR/hosts.tsv
+python3 get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/vectors/all/history?timestampFromIncl=$FROM&timestampToExcl=$TO" > ./$OUT_DIR/vectors.tsv
+python3 get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/links" > ./$OUT_DIR/links.tsv
+python3 get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/hosts" > ./$OUT_DIR/hosts.tsv

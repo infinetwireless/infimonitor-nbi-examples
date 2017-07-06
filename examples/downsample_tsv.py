@@ -1,3 +1,4 @@
+import sys
 import argparse
 import csv
 import re
@@ -10,11 +11,10 @@ from examples.lttb import downsample as lttb_downsample
 
 GAP_VALUE = 'null'
 parser = argparse.ArgumentParser()
-parser.add_argument('--input', required=True)
-parser.add_argument('--output', required=True)
-parser.add_argument('--downsample-to', type=int, default='100')
-# args = parser.parse_args()
-args = parser.parse_args(['--input', '../out/vectors.tsv', '--output', '../out/downsampled_vectors.tsv'])
+parser.add_argument('--downsample-to', type=int, default='100', help='desired number of points per series')
+parser.add_argument('--input', help='input tsv file otherwise stdin will be used')
+parser.add_argument('--output', help='output tsv file otherwise stdout will be used')
+args = parser.parse_args()
 
 
 def parse_datetime(datetime_str):
@@ -27,13 +27,7 @@ def parse_datetime(datetime_str):
     return dt.strptime(normalized_microseconds, "%Y-%m-%dT%H:%M:%S.%f%z")
 
 
-def read_series(file_name, headers_processor, series_processor):
-    with open(file_name, 'rt') as csv_file:
-        reader = csv.reader(csv_file, dialect='excel-tab')
-        _read_series(reader, headers_processor, series_processor)
-
-
-def _read_series(reader, headers_processor, series_processor):
+def read_series(reader, headers_processor, series_processor):
     headers_processor(next(reader))
     index_to_series = {}
     prev_nms_object_uuid, prev_parameter_name = None, None
@@ -132,11 +126,13 @@ def distribute_points_among_series_parts(num_points, series_parts):
 
 
 if __name__ == '__main__':
-    with open(args.output, 'w') as csv_file:
-        writer = csv.writer(csv_file, dialect='excel-tab')
+    with open(args.input, 'rt') if args.input else sys.stdin as input_file, \
+            open(args.output, 'w') if args.output else sys.stdout as output_file:
+        reader = csv.reader(input_file, dialect='excel-tab')
+        writer = csv.writer(output_file, dialect='excel-tab')
 
 
-        def process_series(nms_object_uuid, parameter_name, index, series):
+        def series_processor(nms_object_uuid, parameter_name, index, series):
             series_parts = split_by_gaps(lambda datetime_value: datetime_value[1] == GAP_VALUE, series)
             wrapped_series_parts = distribute_points_among_series_parts(args.downsample_to, series_parts)
             for wrapped_series_part in wrapped_series_parts:
@@ -145,4 +141,4 @@ if __name__ == '__main__':
                     writer.writerow([nms_object_uuid, parameter_name, datetime_value[0], index, datetime_value[1]])
 
 
-        read_series(args.input, writer.writerow, process_series)
+        read_series(reader, writer.writerow, series_processor)
