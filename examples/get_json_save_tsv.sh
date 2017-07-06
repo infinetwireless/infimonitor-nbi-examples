@@ -1,13 +1,28 @@
 #!/bin/sh
-HOST=localhost
+
+# You should specify your InfiMonitor host
+HOST=192.168.200.222
+
+# You should copy TOKEN from page https://$HOST/settings.html#/settings/system
+TOKEN=bcab2bf0-39d6-4686-9ae8-31ea7495b674
+
+# A date-time window of the loaded parameters history. Last month by default,
+# or can be specified manually as something like:
+# FROM=2017-06-01T00:00:00.000+05:00Z
+# TO=2017-07-01T00:00:00.000+05:00Z
+FROM=`date --date='-1 month' +%Y-%m-01T00:00%:z`
+TO=`date                   +%Y-%m-01T00:00%:z`
+
+# Output files path. By default specifies a last month like ../out/2017-06
+LAST_MONTH=`date --date='-1 month' +%Y-%m`
+OUT_DIR=../out/$LAST_MONTH
+
 PATH_PREFIX=/api/nbi/v1.beta
 URL_BASE=https://$HOST$PATH_PREFIX
-FROM=2017-01-01T00:00Z
-TO=2017-06-01T00:00Z
-TOKEN=aaa
-OUT_DIR=../out
 
 mkdir -p $OUT_DIR
-python3 get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/vectors/all/history?timestampFromIncl=$FROM&timestampToExcl=$TO" > ./$OUT_DIR/vectors.tsv
+python3 get_json_save_tsv.py --token $TOKEN \
+ --url "$URL_BASE/vectors/all/history?timestampFromIncl=$FROM&timestampToExcl=$TO" \
+ --page-size $((1024*16)) > ./$OUT_DIR/vectors.tsv
 python3 get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/links" > ./$OUT_DIR/links.tsv
 python3 get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/hosts" > ./$OUT_DIR/hosts.tsv

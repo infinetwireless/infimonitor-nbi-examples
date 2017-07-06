@@ -2,19 +2,12 @@ import sys
 import argparse
 import csv
 import re
+import numpy as np
 from datetime import datetime as dt
 from heapq import heappush, heappop, heapify
-
-import numpy as np
-
 from examples.lttb import downsample as lttb_downsample
 
 GAP_VALUE = 'null'
-parser = argparse.ArgumentParser()
-parser.add_argument('--downsample-to', type=int, default='100', help='desired number of points per series')
-parser.add_argument('--input', help='input tsv file otherwise stdin will be used')
-parser.add_argument('--output', help='output tsv file otherwise stdout will be used')
-args = parser.parse_args()
 
 
 def parse_datetime(datetime_str):
@@ -126,6 +119,12 @@ def distribute_points_among_series_parts(num_points, series_parts):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--downsample-to', type=int, default='100', help='desired number of points per series')
+    parser.add_argument('--input', help='input tsv file otherwise stdin will be used')
+    parser.add_argument('--output', help='output tsv file otherwise stdout will be used')
+    args = parser.parse_args()
+
     with open(args.input, 'rt') if args.input else sys.stdin as input_file, \
             open(args.output, 'w') if args.output else sys.stdout as output_file:
         reader = csv.reader(input_file, dialect='excel-tab')
