@@ -21,7 +21,9 @@ def parse_datetime(datetime_str):
 
 
 def read_series(reader, headers_processor, series_processor):
-    headers_processor(next(reader))
+    for header in reader:
+        headers_processor(header)
+        break
     index_to_series = {}
     prev_nms_object_uuid, prev_parameter_name = None, None
     for nms_object_uuid, parameter_name, datetime, index, value in reader:
