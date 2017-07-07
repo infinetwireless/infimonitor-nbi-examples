@@ -130,7 +130,7 @@ if __name__ == '__main__':
     with open(args.input, 'rt') if args.input else sys.stdin as input_file, \
             open(args.output, 'w') if args.output else sys.stdout as output_file:
         reader = csv.reader(input_file, dialect='excel-tab')
-        writer = csv.writer(output_file, dialect='excel-tab')
+        writer = csv.writer(output_file, dialect='excel-tab', lineterminator='\n')
 
 
         def series_processor(nms_object_uuid, parameter_name, index, series):

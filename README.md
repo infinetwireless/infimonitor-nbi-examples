@@ -6,7 +6,7 @@ add python to PATH
 pip install requests
 pip install python-dateutil
 pip install numpy
-
+pip install pypiwin32
 
 Для работы скрипта `make_report.py3` требуется зависимость win32com,
 зависимость устанавливается с помощью установщика, доступного по ссылке
