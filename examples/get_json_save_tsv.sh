@@ -3,8 +3,8 @@
 # You should specify your InfiMonitor host
 HOST=192.168.200.222
 
-# You should copy TOKEN from page https://$HOST/settings.html#/settings/system
-TOKEN=bcab2bf0-39d6-4686-9ae8-31ea7495b674
+# You should copy a TOKEN value from the page https://$HOST/settings.html#/settings/system
+TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b
 
 # A date-time window of the loaded parameters history. Last month by default,
 # or can be specified manually as something like:
@@ -13,7 +13,7 @@ TOKEN=bcab2bf0-39d6-4686-9ae8-31ea7495b674
 FROM=`date --date='-1 month' +%Y-%m-01T00:00%:z`
 TO=`date                   +%Y-%m-01T00:00%:z`
 
-# Output files path. By default specifies a last month like ../out/2017-06
+# Output files path. By default specified as a last month like ../out/2017-06
 LAST_MONTH=`date --date='-1 month' +%Y-%m`
 OUT_DIR=../out/$LAST_MONTH
 

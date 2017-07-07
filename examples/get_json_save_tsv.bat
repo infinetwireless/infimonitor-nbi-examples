@@ -1,14 +1,33 @@
-set PYTHON=C:\Users\test\AppData\Local\Programs\Python\Python36-32\python.exe
-set HOST=192.168.200.222
-set PATH_PREFIX=/api/nbi/v1.beta
-set URL_BASE=https://%HOST%%PATH_PREFIX%
-set FROM=2017-06-01T00:00Z
-set TO=2017-06-02T00:00Z
-set TOKEN=bcab2bf0-39d6-4686-9ae8-31ea7495b674
-set OUT_DIR=out
+@Echo off
 
-mkdir %OUT_DIR%
-%PYTHON% get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/links --file %OUT_DIR%\links.tsv
-%PYTHON% get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/hosts --file %OUT_DIR%\hosts.tsv
-%PYTHON% get_json_save_tsv.py --token %TOKEN% --url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" --file %OUT_DIR%\vectors.tsv
-pause
+REM You should specify your InfiMonitor host
+SET HOST=192.168.200.222
+
+REM You should copy a TOKEN value from the page https://$HOST/settings.html#/settings/system
+SET TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b
+
+REM A date-time window of the loaded parameters history. Last month by default,
+REM or can be specified manually as something like:
+REM SET FROM=2017-06-01T00:00:00.000+05:00Z
+REM SET TO=2017-07-01T00:00:00.000+05:00Z
+python ms\wnd_date.py --delta-months -1 --format %%Y-%%m-01T00:00%%:z > tmp
+SET /P FROM=<tmp
+DEL tmp
+python ms\wnd_date.py                   --format %%Y-%%m-01T00:00%%:z > tmp
+SET /P TO=<tmp
+DEL tmp
+
+REM Output files path. By default specified as a last month like ..\out\2017-06
+python ms\wnd_date.py --delta-months -1 --format %%Y-%%m > tmp
+SET /P LAST_MONTH=<tmp
+DEL tmp
+SET OUT_DIR=..\out\%LAST_MONTH%
+
+SET PATH_PREFIX=/api/nbi/v1.beta
+SET URL_BASE=https://%HOST%%PATH_PREFIX%
+
+IF NOT EXIST %OUT_DIR% MKDIR %OUT_DIR%
+python get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/links > %OUT_DIR%\links.tsv
+python get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/hosts > %OUT_DIR%\hosts.tsv
+python get_json_save_tsv.py --token %TOKEN% ^
+	--url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" > %OUT_DIR%\vectors.tsv
