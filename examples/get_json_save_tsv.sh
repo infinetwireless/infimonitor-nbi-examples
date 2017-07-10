@@ -1,10 +1,12 @@
 #!/bin/sh
 
 # You should specify your InfiMonitor host
-HOST=192.168.200.222
+# HOST=192.168.200.222
+read -p "An InfiMonitor host: " HOST
 
-# You should copy a TOKEN value from the page https://$HOST/settings.html#/settings/system
-TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b
+# You should copy an integrations API key value from the page https://$HOST/settings.html#/settings/system
+# TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b
+read -p "An integrations API key value from the page https://$HOST/settings.html#/settings/system: " TOKEN=
 
 # A date-time window of the loaded parameters history. Last month by default,
 # or can be specified manually as something like:

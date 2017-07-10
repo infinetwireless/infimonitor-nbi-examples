@@ -1,10 +1,12 @@
 @Echo off
 
 REM You should specify your InfiMonitor host
-SET HOST=192.168.200.222
+REM SET HOST=192.168.200.222
+SET /P HOST="An InfiMonitor host: "
 
-REM You should copy a TOKEN value from the page https://$HOST/settings.html#/settings/system
-SET TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b
+REM You should copy an integrations API key value from the page https://%HOST%/settings.html#/settings/system
+REM SET TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b
+SET /P TOKEN="An integrations API key value from the page https://%HOST%/settings.html#/settings/system: "
 
 REM A date-time window of the loaded parameters history. Last month by default,
 REM or can be specified manually as something like:
@@ -30,4 +32,4 @@ IF NOT EXIST %OUT_DIR% MKDIR %OUT_DIR%
 python get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/links > %OUT_DIR%\links.tsv
 python get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/hosts > %OUT_DIR%\hosts.tsv
 python get_json_save_tsv.py --token %TOKEN% ^
-	--url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" > %OUT_DIR%\vectors.tsv
+--url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" > %OUT_DIR%\vectors.tsv
