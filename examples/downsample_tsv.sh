@@ -11,7 +11,7 @@ OUTPUT=../out/$LAST_MONTH/downsampled_vectors.tsv
 # The target number of points in a series
 DOWNSAMPLE_TO=100
 
-# Specifies where to find imported libraries for python scripts
+# Specifies where to find imported modules for python scripts
 export PYTHONPATH=..
 
 cat $INPUT | python3 downsample_tsv.py --downsample-to $DOWNSAMPLE_TO > $OUTPUT

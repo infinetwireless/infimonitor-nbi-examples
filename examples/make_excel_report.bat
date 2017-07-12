@@ -8,4 +8,7 @@ SET /P LAST_MONTH=<tmp
 DEL tmp
 SET DIR=..\out\%LAST_MONTH%
 
+REM Specifies where to find imported modules for python scripts
+SET PYTHONPATH=..
+
 python make_excel_report.py "%DIR%\hosts.tsv" "%DIR%\links.tsv" "%DIR%\downsampled_vectors.tsv" -o %DIR%\report.xlsx

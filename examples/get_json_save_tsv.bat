@@ -1,8 +1,8 @@
 @Echo off
 
-REM You should specify your InfiMonitor host
+REM You should specify your InfiMONITOR host
 REM SET HOST=192.168.200.222
-SET /P HOST="An InfiMonitor host: "
+SET /P HOST="An InfiMONITOR host: "
 
 REM You should copy an integrations API key value from the page https://%HOST%/settings.html#/settings/system
 REM SET TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b

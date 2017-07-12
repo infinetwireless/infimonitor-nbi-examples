@@ -1,27 +1,30 @@
-# NMS NBI examples
-Network Management System North Bound Interface usage examples.
+# InfiMONITOR Northbound Interface usage examples
+Northbound Interface is a programming interface for integration with the higher-level system.
 
-NMS NBI is a RESTfull API. A RESTful API is an application program interface that uses HTTP requests
+InfiMONITOR NBI is a RESTfull API. A RESTful API is an application program interface that uses HTTP requests
  to GET, PUT, POST and DELETE data.
  
-Swagger 2 used to produce NMS NBI documentation available at https://{INFIMONITOR_HOST}/api/nbi/swagger-ui.html
+Swagger 2 used to produce actual REST API documentation at https://{INFIMONITOR_HOST}/api/nbi/swagger-ui.html
 
 ## Install
-Python 3 with PIP is required.
+Python 3 with PIP are required.
 
     Windows:
         Download from www.python.org
         Install and add python to PATH variable
     
-    Debian:
+    Ubuntu:
         sudo apt-get install python3 python3-pip
     
-    RedHat:
-        sudo yum install rh-python35 rh-python35-pip
+    CentOS:
+        sudo yum install python34 python34-pip
     
+    CentOS SCL:
+        sudo yum install rh-python35 rh-python35-pip
+        
     ...
 
-Packages from PyPI used by examples scripts
+Packages from PyPI used by examples scripts are also required.
 
     Windows:
         pip install --requirement requirements.txt
@@ -30,7 +33,7 @@ Packages from PyPI used by examples scripts
         sudo pip3 install --requirement requirements.txt
 
 ## Description
-Script **get_json_save_tsv.py** allows to get tabular data from NMS NBI and store it as a tab separated values file.
+Script **get_json_save_tsv.py** allows to get tabular data from InfiMONITOR NBI and store it as a tab separated values file.
 
     usage: get_json_save_tsv.py [-h] [--url URL] --token TOKEN [--file FILE] [--page-size PAGE_SIZE]
     optional arguments:
@@ -85,5 +88,5 @@ sorted ascending by first three columns.
 Script **make_excel_report.bat** uses **make_excel_report.py** to generate MS Excel report
  using hosts, links and parameters values history found in directory corresponding to a last month.
 
-Script **load_data_and_make_excel_report.bat** - all in one to get data from NMS NBI, 
+Script **load_data_and_make_excel_report.bat** - all in one to get data from InfiMONITOR NBI, 
 downsample it and to generate a MS Excel report for a last month.

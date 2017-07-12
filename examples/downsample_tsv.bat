@@ -13,7 +13,7 @@ SET OUTPUT=..\out\%LAST_MONTH%\downsampled_vectors.tsv
 REM The target number of points in a series
 SET DOWNSAMPLE_TO=100
 
-REM Specifies where to find imported libraries for python scripts
+REM Specifies where to find imported modules for python scripts
 SET PYTHONPATH=..
 
 python downsample_tsv.py --input %INPUT% --downsample-to %DOWNSAMPLE_TO% > %OUTPUT%

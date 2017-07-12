@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# You should specify your InfiMonitor host
+# You should specify your InfiMONITOR host
 # HOST=192.168.200.222
-read -p "An InfiMonitor host: " HOST
+read -p "An InfiMONITOR host: " HOST
 
 # You should copy an integrations API key value from the page https://$HOST/settings.html#/settings/system
 # TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b
