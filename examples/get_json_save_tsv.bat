@@ -1,5 +1,8 @@
 @Echo off
 
+REM All paths variables are related to directory where this script is localed
+SET SCRIPT_DIR=%~p0
+
 REM You should specify your InfiMONITOR host
 REM SET HOST=192.168.200.222
 SET /P HOST="An InfiMONITOR host: "
@@ -12,24 +15,24 @@ REM A date-time window of the loaded parameters history. Last month by default,
 REM or can be specified manually as something like:
 REM SET FROM=2017-06-01T00:00:00.000+05:00Z
 REM SET TO=2017-07-01T00:00:00.000+05:00Z
-python ms\wnd_date.py --delta-months -1 --format %%Y-%%m-01T00:00%%:z > tmp
+python %SCRIPT_DIR%\ms\wnd_date.py --delta-months -1 --format %%Y-%%m-01T00:00%%:z > tmp
 SET /P FROM=<tmp
 DEL tmp
-python ms\wnd_date.py                   --format %%Y-%%m-01T00:00%%:z > tmp
+python %SCRIPT_DIR%\ms\wnd_date.py                   --format %%Y-%%m-01T00:00%%:z > tmp
 SET /P TO=<tmp
 DEL tmp
 
 REM Output files path. By default specified as a last month like ..\out\2017-06
-python ms\wnd_date.py --delta-months -1 --format %%Y-%%m > tmp
+python %SCRIPT_DIR%\ms\wnd_date.py --delta-months -1 --format %%Y-%%m > tmp
 SET /P LAST_MONTH=<tmp
 DEL tmp
-SET OUT_DIR=..\out\%LAST_MONTH%
+SET OUT_DIR=%SCRIPT_DIR%\..\out\%LAST_MONTH%
 
 SET PATH_PREFIX=/api/nbi/v1.beta
 SET URL_BASE=https://%HOST%%PATH_PREFIX%
 
 IF NOT EXIST %OUT_DIR% MKDIR %OUT_DIR%
-python get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/links > %OUT_DIR%\links.tsv
-python get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/hosts > %OUT_DIR%\hosts.tsv
-python get_json_save_tsv.py --token %TOKEN% ^
+python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/hosts > %OUT_DIR%\hosts.tsv
+python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/links > %OUT_DIR%\links.tsv
+python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
 --url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" > %OUT_DIR%\vectors.tsv
