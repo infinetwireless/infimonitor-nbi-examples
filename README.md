@@ -11,7 +11,7 @@ Python 3 with PIP are required.
 
     Windows:
         Download from www.python.org
-        Install and add python to PATH variable
+        Install and add to PATH variable (checkbox in the installation wizard)
     
     Ubuntu:
         sudo apt-get install python3 python3-pip
@@ -38,7 +38,7 @@ Script **get_json_save_tsv.py** allows to get tabular data from InfiMONITOR NBI 
     usage: get_json_save_tsv.py [-h] [--url URL] --token TOKEN [--file FILE] [--page-size PAGE_SIZE]
     optional arguments:
       -h, --help            show this help message and exit
-      --url URL             REST API URL
+      --url URL             REST API entry point URL
       --token TOKEN         REST API token
       --file FILE           Path to the tsv file otherwise stdout will be used
       --page-size PAGE_SIZE Number of JSON objects in a single HTTP response

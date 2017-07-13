@@ -6,7 +6,7 @@ read -p "An InfiMONITOR host: " HOST
 
 # You should copy an integrations API key value from the page https://$HOST/settings.html#/settings/system
 # TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b
-read -p "An integrations API key value from the page https://$HOST/settings.html#/settings/system: " TOKEN=
+read -p "An integrations API key value from the page https://$HOST/settings.html#/settings/system: " TOKEN
 
 # A date-time window of the loaded parameters history. Last month by default,
 # or can be specified manually as something like:

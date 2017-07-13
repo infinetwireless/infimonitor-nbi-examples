@@ -44,12 +44,13 @@ def json_item_to_row(json_item, column_names):
         value = json_item[name]
         return value if isinstance(value, str) else json.dumps(value)
 
-    return map(extract_json_item_attribute, column_names)
+    return list(map(extract_json_item_attribute, column_names))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--url', default='https://localhost/api/nbi/v1.beta/vectors/all/history', help='REST API URL')
+    parser.add_argument('--url', default='https://localhost/api/nbi/v1.beta/vectors/all/history',
+                        help='REST API entry point URL')
     parser.add_argument('--token', required=True, help='REST API token')
     parser.add_argument('--file', help='Path to the tsv file otherwise stdout will be used')
     parser.add_argument('--page-size', type=int, default=str(1024),
@@ -66,7 +67,7 @@ if __name__ == '__main__':
         for page in itertools.count():
             json_items = get_json(args.token, url, page, args.page_size)
             if not column_names and json_items:
-                column_names = json_items[0].keys()
+                column_names = list(json_items[0].keys())
                 writer.writerow(column_names)
             for json_item in json_items:
                 writer.writerow(json_item_to_row(json_item, column_names))
