@@ -3,13 +3,15 @@
 # All paths variables are related to directory where this script is localed
 SCRIPT_DIR=$(dirname $(realpath $0))
 
+# Initialize common variables in a single place
+. $SCRIPT_DIR/common_variables.sh
+
 # Input and output files. By default they are located in a last month named directory like ../out/2017-06
-# They can be specified manually as something like:
+INPUT=$DEFAULT_OUT_DIR/vectors.tsv
+OUTPUT=$DEFAULT_OUT_DIR/downsampled_vectors.tsv
+# or can be specified manually as something like:
 # INPUT=$SCRIPT_DIR/../out/2017-06/vectors.tsv
 # OUTPUT=$SCRIPT_DIR/../out/2017-06/downsampled_vectors.tsv
-LAST_MONTH=`date --date='-1 month' +%Y-%m`
-INPUT=$SCRIPT_DIR/../out/$LAST_MONTH/vectors.tsv
-OUTPUT=$SCRIPT_DIR/../out/$LAST_MONTH/downsampled_vectors.tsv
 
 # The target number of points in a series
 DOWNSAMPLE_TO=100
