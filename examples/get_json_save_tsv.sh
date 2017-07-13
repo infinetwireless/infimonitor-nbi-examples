@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# All paths variables are related to directory where this script is localed
+SCRIPT_DIR=$(dirname $(realpath $0))
+
 # You should specify your InfiMONITOR host
 # HOST=192.168.200.222
 read -p "An InfiMONITOR host: " HOST
@@ -17,14 +20,14 @@ TO=`date                   +%Y-%m-01T00:00%:z`
 
 # Output files path. By default specified as a last month like ../out/2017-06
 LAST_MONTH=`date --date='-1 month' +%Y-%m`
-OUT_DIR=../out/$LAST_MONTH
+OUT_DIR=$SCRIPT_DIR/../out/$LAST_MONTH
 
 PATH_PREFIX=/api/nbi/v1.beta
 URL_BASE=https://$HOST$PATH_PREFIX
 
 mkdir -p $OUT_DIR
-python3 get_json_save_tsv.py --token $TOKEN \
+python3 $SCRIPT_DIR/get_json_save_tsv.py --token $TOKEN \
  --url "$URL_BASE/vectors/all/history?timestampFromIncl=$FROM&timestampToExcl=$TO" \
- --page-size $((1024*16)) > ./$OUT_DIR/vectors.tsv
-python3 get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/links" > ./$OUT_DIR/links.tsv
-python3 get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/hosts" > ./$OUT_DIR/hosts.tsv
+ --page-size $((1024*16)) > $OUT_DIR/vectors.tsv
+python3 $SCRIPT_DIR/get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/links" > $OUT_DIR/links.tsv
+python3 $SCRIPT_DIR/get_json_save_tsv.py --token $TOKEN --url "$URL_BASE/hosts" > $OUT_DIR/hosts.tsv
