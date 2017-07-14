@@ -43,6 +43,8 @@ Script **get_json_save_tsv.py** allows to get tabular data from InfiMONITOR NBI 
       --file FILE           Path to the tsv file otherwise stdout will be used
       --page-size PAGE_SIZE Number of JSON objects in a single HTTP response
 
+*See more about available REST API entry points at https://{INFIMONITOR_HOST}/api/nbi/swagger-ui.html*   
+
 Scripts **get_json_save_tsv.bat** or **get_json_save_tsv.sh** 
 uses **get_json_save_tsv.py** to load hosts, links and parameters values history for a last month.
 

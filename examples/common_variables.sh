@@ -10,8 +10,8 @@ DEFAULT_TO=`date                   +%Y-%m-01T00:00%:z`
 # DEFAULT_FROM=2017-06-01T00:00:00.000+05:00
 # DEFAULT_TO=2017-07-01T00:00:00.000+05:00
 
-# A default output files directory. It is specified as a last month like ..\out\2017-06
+# A default output files directory. It is specified as a last month like ../out/2017-06
 LAST_MONTH=`date --date='-1 month' +%Y-%m`
 DEFAULT_OUT_DIR=$SCRIPT_DIR/../out/$LAST_MONTH
 # or can be specified manually:
-# DEFAULT_OUT_DIR=$SCRIPT_DIR/../out\2017-06
+# DEFAULT_OUT_DIR=$SCRIPT_DIR/../out/2017-06
