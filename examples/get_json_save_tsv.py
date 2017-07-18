@@ -28,9 +28,9 @@ def reencode_query_string(url):
     return re.sub('([^?]+)([^#]+)?(.+)?', reassemble, url)
 
 
-def get_json(token, url, page, size):
+def get_json(token, url, params):
     response = requests.get(url,
-                            params={'page': page, 'size': size},
+                            params=params,
                             headers={
                                 'x-auth-token': token,
                                 'Accept': 'application/json'},
@@ -53,23 +53,34 @@ if __name__ == '__main__':
                         help='REST API entry point URL')
     parser.add_argument('--token', required=True, help='REST API token')
     parser.add_argument('--file', help='Path to the tsv file otherwise stdout will be used')
-    parser.add_argument('--page-size', type=int, default=str(1024),
-                        help='Number of JSON objects in a single HTTP response')
-
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--page-size', type=int, default="1024",
+                       help='Number of JSON objects in a single HTTP response')
+    group.add_argument('--quantity-of-parts', type=int,
+                       help='Number of JSON objects in a single HTTP response')
     args = parser.parse_args()
+
     url = reencode_query_string(args.url)
 
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
     with open(args.file, 'w') if args.file else sys.stdout as file:
         writer = csv.writer(file, dialect='excel-tab', lineterminator='\n')
+        if args.quantity_of_parts:
+            paging = False
+            parameters_stream = map(lambda x: {'part': x, 'ofParts': args.quantity_of_parts},
+                                    range(args.quantity_of_parts))
+        else:
+            paging = True
+            parameters_stream = map(lambda x: {'page': x, 'size': args.page_size}, itertools.count())
+
         column_names = None
-        for page in itertools.count():
-            json_items = get_json(args.token, url, page, args.page_size)
+        for parameters in parameters_stream:
+            json_items = get_json(args.token, url, parameters)
             if not column_names and json_items:
                 column_names = list(json_items[0].keys())
                 writer.writerow(column_names)
             for json_item in json_items:
                 writer.writerow(json_item_to_row(json_item, column_names))
-            if len(json_items) < args.page_size:
+            if paging and len(json_items) != args.page_size:
                 break
