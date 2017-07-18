@@ -15,4 +15,4 @@ REM Specifies where to find imported modules for python scripts
 SET PYTHONPATH=%SCRIPT_DIR%\..
 
 python %SCRIPT_DIR%\make_excel_report.py ^
-  "%OUT_DIR%\hosts.tsv" "%OUT_DIR%\links.tsv" "%OUT_DIR%\downsampled_vectors.tsv" -o %OUT_DIR%\report.xlsx
+  "%OUT_DIR%\hosts.tsv" "%OUT_DIR%\links.tsv" "%OUT_DIR%\downsampled_vectors_history.tsv" -o %OUT_DIR%\report.xlsx

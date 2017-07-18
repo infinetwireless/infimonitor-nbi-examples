@@ -33,4 +33,4 @@ IF NOT EXIST %OUT_DIR% MKDIR %OUT_DIR%
 python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/hosts > %OUT_DIR%\hosts.tsv
 python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/links > %OUT_DIR%\links.tsv
 python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
-  --url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" > %OUT_DIR%\vectors.tsv
+  --url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" > %OUT_DIR%\vectors_history.tsv

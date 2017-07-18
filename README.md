@@ -88,7 +88,7 @@ sorted ascending by first three columns.
                    was launched.
 
 Script **make_excel_report.bat** uses **make_excel_report.py** to generate MS Excel report
- using hosts, links and parameters values history found in directory corresponding to a last month.
+ using hosts, links and parameters values history found in a directory corresponding to a last month.
 
 Script **load_data_and_make_excel_report.bat** - all in one to get data from InfiMONITOR NBI, 
 downsample it and to generate a MS Excel report for a last month.
