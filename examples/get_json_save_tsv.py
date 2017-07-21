@@ -35,7 +35,9 @@ def get_json(token, url, params):
                                 'x-auth-token': token,
                                 'Accept': 'application/json'},
                             verify=False)
-    response.raise_for_status()
+    if response.status_code != 200 and response.text:
+        response.reason = response.text
+        response.raise_for_status()
     return response.json(object_pairs_hook=OrderedDict)
 
 
