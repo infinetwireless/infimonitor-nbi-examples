@@ -30,10 +30,13 @@ SET PATH_PREFIX=/api/nbi/v1.beta
 SET URL_BASE=https://%HOST%%PATH_PREFIX%
 
 IF NOT EXIST %OUT_DIR% MKDIR %OUT_DIR%
-python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/hosts > %OUT_DIR%\hosts.tsv
-python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% --url %URL_BASE%/links > %OUT_DIR%\links.tsv
 python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
-  --url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" > %OUT_DIR%\vectors_history.tsv
-REM python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
-REM   --url "%URL_BASE%/hosts/all/parameters"
-REM   --quantity-of-parts 10 > %OUT_DIR%\hosts_parameters.tsv
+  --url %URL_BASE%/links ^
+  --quantity-of-parts 10 > %OUT_DIR%\links.tsv
+python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
+  --url %URL_BASE%/hosts/all/parameters?parametersNames=hostLabel ^
+  --quantity-of-parts 10 > %OUT_DIR%\hosts_labels.tsv
+SET /A PAGE_SIZE=1024*16
+python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
+  --url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" ^
+  --page-size %PAGE_SIZE% > %OUT_DIR%\vectors_history.tsv

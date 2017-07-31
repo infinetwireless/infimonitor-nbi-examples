@@ -173,7 +173,7 @@ class Reporter:
         message('Reading {}'.format(hostsFile))
         with open(hostsFile) as f:
             for row in Reader(f):
-                hosts[row['uuid']] = row['name']
+                hosts[row['nmsObjectUuid']] = row['value']
                 
 
         # Handle links rows
