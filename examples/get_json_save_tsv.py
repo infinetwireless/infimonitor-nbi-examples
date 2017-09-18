@@ -8,7 +8,7 @@ from collections import OrderedDict
 import argparse
 import urllib
 import re
-
+from datetime import datetime as dt
 
 def reencode_query_string(url):
     def reassemble(matches):
@@ -77,7 +77,10 @@ if __name__ == '__main__':
             parameters_stream = map(lambda x: {'page': x, 'size': args.page_size}, itertools.count())
 
         column_names = None
+        started_at = dt.now()
         for parameters in parameters_stream:
+            if args.file:
+                sys.stdout.write("\rGET " + args.url + " " + str(parameters))
             json_items = get_json(args.token, url, parameters)
             if not column_names and json_items:
                 column_names = list(json_items[0].keys())
@@ -86,3 +89,5 @@ if __name__ == '__main__':
                 writer.writerow(json_item_to_row(json_item, column_names))
             if paging and len(json_items) != args.page_size:
                 break
+        if args.file:
+            sys.stdout.write("\ndone at " + str(dt.now() - started_at) + "\n");

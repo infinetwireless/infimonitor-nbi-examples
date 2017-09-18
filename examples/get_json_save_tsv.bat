@@ -32,11 +32,14 @@ SET URL_BASE=https://%HOST%%PATH_PREFIX%
 IF NOT EXIST %OUT_DIR% MKDIR %OUT_DIR%
 python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
   --url "%URL_BASE%/links?includeDeleted=true&includeDeactivated=true" ^
-  --quantity-of-parts 10 > %OUT_DIR%\links.tsv
+  --quantity-of-parts 10 ^
+  --file %OUT_DIR%\links.tsv
 python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
   --url "%URL_BASE%/hosts/all/parameters?parametersNames=hostLabel&includeDeleted=true&includeDeactivated=true" ^
-  --quantity-of-parts 10 > %OUT_DIR%\hosts_labels.tsv
+  --quantity-of-parts 10 ^
+  --file %OUT_DIR%\hosts_labels.tsv
 SET /A PAGE_SIZE=1024*16
 python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
   --url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" ^
-  --page-size %PAGE_SIZE% > %OUT_DIR%\vectors_history.tsv
+  --page-size %PAGE_SIZE% ^
+  --file %OUT_DIR%\vectors_history.tsv
