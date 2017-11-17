@@ -41,5 +41,5 @@ python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
 SET /A PAGE_SIZE=1024*16
 python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
   --url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" ^
-  --page-size %PAGE_SIZE% ^
+  --quantity-of-parts 200 ^
   --file %OUT_DIR%\vectors_history.tsv
