@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # All paths variables are related to directory where this script is localed
-SCRIPT_DIR=$(dirname $(realpath $0))
+SCRIPT_DIR=$(dirname "$(realpath $0)")
 
 # Initialize common variables in a single place
-. $SCRIPT_DIR/common_variables.sh
+. "$SCRIPT_DIR/common_variables.sh"
 
 # Input and output files. By default they are located in a last month named directory like ../out/2017-06
 INPUT=$DEFAULT_OUT_DIR/vectors_history.tsv
@@ -17,6 +17,6 @@ OUTPUT=$DEFAULT_OUT_DIR/downsampled_vectors_history.tsv
 DOWNSAMPLE_TO=100
 
 # Specifies where to find imported modules for python scripts
-export PYTHONPATH=$SCRIPT_DIR/..
+export "PYTHONPATH=$SCRIPT_DIR/.."
 
-cat $INPUT | python3 $SCRIPT_DIR/downsample_tsv.py --downsample-to $DOWNSAMPLE_TO > $OUTPUT
+cat "$INPUT" | python3 "$SCRIPT_DIR/downsample_tsv.py" --downsample-to $DOWNSAMPLE_TO > "$OUTPUT"

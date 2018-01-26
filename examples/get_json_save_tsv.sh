@@ -1,10 +1,9 @@
 #!/bin/sh
 
 # All paths variables are related to directory where this script is localed
-SCRIPT_DIR=$(dirname $(realpath $0))
-
+SCRIPT_DIR=$(dirname "$(realpath $0)")
 # Initialize common variables in a single place
-. $SCRIPT_DIR/common_variables.sh
+. "$SCRIPT_DIR/common_variables.sh"
 
 # You should specify your InfiMONITOR host
 # HOST=192.168.200.222
@@ -30,16 +29,16 @@ OUT_DIR=$DEFAULT_OUT_DIR
 PATH_PREFIX=/api/nbi/v1.beta
 URL_BASE=https://$HOST$PATH_PREFIX
 
-mkdir -p $OUT_DIR
-python3 $SCRIPT_DIR/get_json_save_tsv.py --token $TOKEN \
+mkdir -p "$OUT_DIR"
+python3 "$SCRIPT_DIR/get_json_save_tsv.py" --token $TOKEN \
   --url "$URL_BASE/links?includeDeleted=true&includeDeactivated=true" \
   --quantity-of-parts 10 \
-  --file $OUT_DIR/links.tsv
-python3 $SCRIPT_DIR/get_json_save_tsv.py --token $TOKEN \
+  --file "$OUT_DIR/links.tsv"
+python3 "$SCRIPT_DIR/get_json_save_tsv.py" --token $TOKEN \
   --url "$URL_BASE/hosts/all/parameters?parametersNames=hostLabel&includeDeleted=true&includeDeactivated=true" \
   --quantity-of-parts 10 \
-  --file $OUT_DIR/hosts_labels.tsv
-python3 $SCRIPT_DIR/get_json_save_tsv.py --token $TOKEN \
+  --file "$OUT_DIR/hosts_labels.tsv"
+python3 "$SCRIPT_DIR/get_json_save_tsv.py" --token $TOKEN \
   --url "$URL_BASE/vectors/all/history?timestampFromIncl=$FROM&timestampToExcl=$TO" \
-  --quantity-of-parts 200 \
-  --file $OUT_DIR/vectors_history.tsv
+  --quantity-of-parts 100 \
+  --file "$OUT_DIR/vectors_history.tsv"
