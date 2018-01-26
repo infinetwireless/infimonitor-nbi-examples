@@ -1,10 +1,10 @@
 @Echo off
 
 REM All paths variables are related to directory where this script is localed
-SET SCRIPT_DIR=%~p0
+SET SCRIPT_DIR=%~dp0
 
 REM Initialize common variables in a single place
-CALL %SCRIPT_DIR%\common_variables.bat
+CALL "%SCRIPT_DIR%\common_variables.bat"
 
 REM You should specify your InfiMONITOR host
 REM SET HOST=192.168.200.222
@@ -29,17 +29,16 @@ REM SET OUT_DIR=%SCRIPT_DIR%\..\out\2017-06
 SET PATH_PREFIX=/api/nbi/v1.beta
 SET URL_BASE=https://%HOST%%PATH_PREFIX%
 
-IF NOT EXIST %OUT_DIR% MKDIR %OUT_DIR%
-python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
+IF NOT EXIST "%OUT_DIR%" MKDIR "%OUT_DIR%"
+python "%SCRIPT_DIR%\get_json_save_tsv.py" --token %TOKEN% ^
   --url "%URL_BASE%/links?includeDeleted=true&includeDeactivated=true" ^
   --quantity-of-parts 10 ^
-  --file %OUT_DIR%\links.tsv
-python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
+  --file "%OUT_DIR%\links.tsv"
+python "%SCRIPT_DIR%\get_json_save_tsv.py" --token %TOKEN% ^
   --url "%URL_BASE%/hosts/all/parameters?parametersNames=hostLabel&includeDeleted=true&includeDeactivated=true" ^
   --quantity-of-parts 10 ^
-  --file %OUT_DIR%\hosts_labels.tsv
-SET /A PAGE_SIZE=1024*16
-python %SCRIPT_DIR%\get_json_save_tsv.py --token %TOKEN% ^
+  --file "%OUT_DIR%\hosts_labels.tsv"
+python "%SCRIPT_DIR%\get_json_save_tsv.py" --token %TOKEN% ^
   --url "%URL_BASE%/vectors/all/history?timestampFromIncl=%FROM%&timestampToExcl=%TO%" ^
-  --quantity-of-parts 200 ^
-  --file %OUT_DIR%\vectors_history.tsv
+  --quantity-of-parts 100 ^
+  --file "%OUT_DIR%\vectors_history.tsv"

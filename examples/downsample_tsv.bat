@@ -1,10 +1,10 @@
 @Echo off
 
 REM All paths variables are related to directory where this script is localed
-SET SCRIPT_DIR=%~p0
+SET SCRIPT_DIR=%~dp0
 
 REM Initialize common variables in a single place
-CALL %SCRIPT_DIR%\common_variables.bat
+CALL "%SCRIPT_DIR%\common_variables.bat"
 
 REM Input and output files. By default they are located in a last month named directory like ../out/2017-06
 SET INPUT=%DEFAULT_OUT_DIR%\vectors_history.tsv
@@ -17,6 +17,6 @@ REM The target number of points in a series
 SET DOWNSAMPLE_TO=100
 
 REM Specifies where to find imported modules for python scripts
-SET PYTHONPATH=%SCRIPT_DIR%\..
+SET "PYTHONPATH=%SCRIPT_DIR%\.."
 
-python %SCRIPT_DIR%\downsample_tsv.py --input %INPUT% --downsample-to %DOWNSAMPLE_TO% > %OUTPUT%
+python "%SCRIPT_DIR%\downsample_tsv.py" --input "%INPUT%" --downsample-to %DOWNSAMPLE_TO% > "%OUTPUT%"
