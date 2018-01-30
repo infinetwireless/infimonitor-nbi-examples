@@ -1,4 +1,4 @@
 requests
 python-dateutil
 numpy
-pypiwin32; sys_platform == 'win32'
+pypiwin32; platform_system == 'Windows'
