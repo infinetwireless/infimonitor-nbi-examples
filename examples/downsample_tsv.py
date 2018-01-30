@@ -120,20 +120,60 @@ def distribute_points_among_series_parts(num_points, series_parts):
     return wrapped_series_parts
 
 
+class Progress:
+    def __init__(self, args):
+        if args.show_progress and args.input:
+            self.total_quantity = 0
+            with open(args.input, 'rt') if args.input else sys.stdin as input_file:
+                reader = csv.reader(input_file, dialect='excel-tab')
+                read_series(reader, lambda *args: None, lambda *args: self.increment_and_show_total())
+            Progress.stderr_print('\r' + ' '*len(self.get_total_quantity_str()))
+        else:
+            self.total_quantity = 'unknown'
+        self.progress_quantity = 0
+
+    def add_total_quantity(self, amount):
+        self.total_quantity += amount
+
+    def add_progress_quantity(self, amount):
+        self.progress_quantity += amount
+
+    def get_total_quantity_str(self):
+        return "Estimating total: {0}".format(self.total_quantity)
+
+    def get_progress_quantity_str(self):
+        return "Progress: {0} of {1}".format(self.progress_quantity, self.total_quantity)
+
+    def increment_and_show_total(self):
+        self.add_total_quantity(1)
+        Progress.stderr_print('\r' + self.get_total_quantity_str())
+
+    def increment_and_show_progress(self):
+        self.add_progress_quantity(1)
+        Progress.stderr_print('\r' + self.get_progress_quantity_str())
+
+    def stderr_print(*args):
+        print(*args, file=sys.stderr, end='')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--downsample-to', type=int, default='100', help='desired number of points per series')
     parser.add_argument('--input', help='input tsv file otherwise stdin will be used')
     parser.add_argument('--output', help='output tsv file otherwise stdout will be used')
+    parser.add_argument('--show-progress', action='store_true', default=False,
+                        help='show progress of downsampling, ignored if --input is not specified')
     args = parser.parse_args()
 
     with open(args.input, 'rt') if args.input else sys.stdin as input_file, \
             open(args.output, 'w') if args.output else sys.stdout as output_file:
         reader = csv.reader(input_file, dialect='excel-tab')
         writer = csv.writer(output_file, dialect='excel-tab', lineterminator='\n')
+        progress = Progress(args)
 
 
         def series_processor(nms_object_uuid, parameter_name, index, series):
+            progress.increment_and_show_progress()
             series_parts = split_by_gaps(lambda datetime_value: datetime_value[1] == GAP_VALUE, series)
             wrapped_series_parts = distribute_points_among_series_parts(args.downsample_to, series_parts)
             for wrapped_series_part in wrapped_series_parts:
@@ -143,3 +183,4 @@ if __name__ == '__main__':
 
 
         read_series(reader, writer.writerow, series_processor)
+        Progress.stderr_print("\nDone\n")
