@@ -19,4 +19,8 @@ DOWNSAMPLE_TO=100
 # Specifies where to find imported modules for python scripts
 export "PYTHONPATH=$SCRIPT_DIR/.."
 
-python3 "$SCRIPT_DIR/downsample_tsv.py" --input "$INPUT" --downsample-to $DOWNSAMPLE_TO --show-progress > "$OUTPUT"
+python3 "$SCRIPT_DIR/downsample_tsv.py" \
+  --input "$INPUT" \
+  --downsample-to $DOWNSAMPLE_TO \
+  --estimate-progress \
+  > "$OUTPUT"

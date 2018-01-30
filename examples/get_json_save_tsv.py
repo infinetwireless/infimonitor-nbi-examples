@@ -78,9 +78,9 @@ if __name__ == '__main__':
 
         column_names = None
         started_at = dt.now()
+        sys.stderr.write("GET " + args.url + "\n  ")
         for parameters in parameters_stream:
-            if args.file:
-                sys.stdout.write("\rGET " + args.url + " " + str(parameters))
+            sys.stderr.write("\r  " + str(parameters))
             json_items = get_json(args.token, url, parameters)
             if not column_names and json_items:
                 column_names = list(json_items[0].keys())
@@ -89,5 +89,4 @@ if __name__ == '__main__':
                 writer.writerow(json_item_to_row(json_item, column_names))
             if paging and len(json_items) != args.page_size:
                 break
-        if args.file:
-            sys.stdout.write("\ndone at " + str(dt.now() - started_at) + "\n");
+        sys.stderr.write("\nDone at " + str(dt.now() - started_at) + "\n")

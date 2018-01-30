@@ -30,15 +30,18 @@ PATH_PREFIX=/api/nbi/v1.beta
 URL_BASE=https://$HOST$PATH_PREFIX
 
 mkdir -p "$OUT_DIR"
-python3 "$SCRIPT_DIR/get_json_save_tsv.py" --token $TOKEN \
+python3 "$SCRIPT_DIR/get_json_save_tsv.py" \
+  --token $TOKEN \
   --url "$URL_BASE/links?includeDeleted=true&includeDeactivated=true" \
   --quantity-of-parts 10 \
-  --file "$OUT_DIR/links.tsv"
-python3 "$SCRIPT_DIR/get_json_save_tsv.py" --token $TOKEN \
+  > "$OUT_DIR/links.tsv"
+python3 "$SCRIPT_DIR/get_json_save_tsv.py" \
+  --token $TOKEN \
   --url "$URL_BASE/hosts/all/parameters?parametersNames=hostLabel&includeDeleted=true&includeDeactivated=true" \
   --quantity-of-parts 10 \
-  --file "$OUT_DIR/hosts_labels.tsv"
-python3 "$SCRIPT_DIR/get_json_save_tsv.py" --token $TOKEN \
+  > "$OUT_DIR/hosts_labels.tsv"
+python3 "$SCRIPT_DIR/get_json_save_tsv.py" \
+  --token $TOKEN \
   --url "$URL_BASE/vectors/all/history?timestampFromIncl=$FROM&timestampToExcl=$TO" \
   --quantity-of-parts 100 \
-  --file "$OUT_DIR/vectors_history.tsv"
+  > "$OUT_DIR/vectors_history.tsv"

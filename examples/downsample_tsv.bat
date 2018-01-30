@@ -19,4 +19,8 @@ SET DOWNSAMPLE_TO=100
 REM Specifies where to find imported modules for python scripts
 SET "PYTHONPATH=%SCRIPT_DIR%\.."
 
-python "%SCRIPT_DIR%\downsample_tsv.py" --input "%INPUT%" --downsample-to %DOWNSAMPLE_TO% --show-progress > "%OUTPUT%"
+python "%SCRIPT_DIR%\downsample_tsv.py"
+  --input "%INPUT%"
+  --downsample-to %DOWNSAMPLE_TO%
+  --estimate-progress
+  > "%OUTPUT%"

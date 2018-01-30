@@ -122,7 +122,7 @@ def distribute_points_among_series_parts(num_points, series_parts):
 
 class Progress:
     def __init__(self, args):
-        if args.show_progress and args.input:
+        if args.estimate_progress and args.input:
             self.total_quantity = 0
             with open(args.input, 'rt') if args.input else sys.stdin as input_file:
                 reader = csv.reader(input_file, dialect='excel-tab')
@@ -161,12 +161,13 @@ if __name__ == '__main__':
     parser.add_argument('--downsample-to', type=int, default='100', help='desired number of points per series')
     parser.add_argument('--input', help='input tsv file otherwise stdin will be used')
     parser.add_argument('--output', help='output tsv file otherwise stdout will be used')
-    parser.add_argument('--show-progress', action='store_true', default=False,
-                        help='show progress of downsampling, ignored if --input is not specified')
+    parser.add_argument('--estimate-progress', action='store_true', default=False,
+                        help='do estimation of downsampling progress, ignored if --input is not specified')
     args = parser.parse_args()
 
     with open(args.input, 'rt') if args.input else sys.stdin as input_file, \
             open(args.output, 'w') if args.output else sys.stdout as output_file:
+        started_at = dt.now()
         reader = csv.reader(input_file, dialect='excel-tab')
         writer = csv.writer(output_file, dialect='excel-tab', lineterminator='\n')
         progress = Progress(args)
@@ -183,4 +184,4 @@ if __name__ == '__main__':
 
 
         read_series(reader, writer.writerow, series_processor)
-        Progress.stderr_print("\nDone\n")
+        Progress.stderr_print("\nDone at " + str(dt.now() - started_at) + "\n")
