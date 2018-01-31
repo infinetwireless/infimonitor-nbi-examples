@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # All paths variables are related to directory where this script is localed
-SCRIPT_DIR=$(dirname "$(realpath $0)")
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Initialize common variables in a single place
 . "$SCRIPT_DIR/common_variables.sh"

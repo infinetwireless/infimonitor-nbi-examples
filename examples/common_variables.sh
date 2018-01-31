@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # All paths variables are related to directory where this script is localed
-SCRIPT_DIR=$(dirname "$(realpath $0)")
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # A default date-time window of the loaded parameters history. Last month by default,
 export DEFAULT_FROM=`date --date='-1 month' +%Y-%m-01T00:00%:z`
