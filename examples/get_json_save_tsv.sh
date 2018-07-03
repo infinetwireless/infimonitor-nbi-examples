@@ -15,9 +15,9 @@ read -p "An InfiMONITOR host: " HOST
 read -p "An integrations API key value from the page https://$HOST/settings.html#/settings/system: " TOKEN
 
 # A date-time window of the loaded parameters history. Last month by default,
-# or can be specified manually as something like:
 FROM=$DEFAULT_FROM
 TO=$DEFAULT_TO
+# or can be specified manually as something like:
 # FROM=2017-06-01T00:00:00.000+05:00
 # TO=2017-07-01T00:00:00.000+05:00
 

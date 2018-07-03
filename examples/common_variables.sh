@@ -4,7 +4,7 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # A default date-time window of the loaded parameters history. Last month by default,
-export DEFAULT_FROM=`date --date='-1 month' +%Y-%m-01T00:00%:z`
+DEFAULT_FROM=`date --date='-1 month' +%Y-%m-01T00:00%:z`
 DEFAULT_TO=`date                   +%Y-%m-01T00:00%:z`
 # or can be specified manually as something like:
 # DEFAULT_FROM=2017-06-01T00:00:00.000+05:00
