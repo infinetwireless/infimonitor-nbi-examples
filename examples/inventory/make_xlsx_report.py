@@ -5,6 +5,7 @@ from collections import OrderedDict
 import os
 import re
 import sys
+import traceback
 import xlsxwriter
 
 IS_FLOAT_REGEXP = re.compile('^\d+(\.\d+)?$')
@@ -123,15 +124,15 @@ def format_values(host, parameter_name):
 
 
 def make_report(hosts, report_file):
-    parameter_to_column = OrderedDict()
-    parameter_to_column['hostLabel'] = Column('Host name', 20)
-    parameter_to_column['ipAdEntAddr'] = Column('IP address', 60)
-    parameter_to_column['productFamily'] = Column('Product family', 15)
-    parameter_to_column['sysSerialNumber'] = Column('Serial number', 15)
-    parameter_to_column['sysSoftwareVersion'] = Column('Software version', 15)
-    parameter_to_column['sysModel'] = Column('Model', 25)
-    parameter_to_column[BANDWIDTH] = Column('Bandwidth MHz', 15)
-    parameter_to_column['rmFrequency'] = Column('Frequency MHz', 15)
+    parameter_to_column = OrderedDict([
+        ('hostLabel', Column('Host name', 20)),
+        ('ipAdEntAddr', Column('IP address', 60)),
+        ('productFamily', Column('Product family', 15)),
+        ('sysSerialNumber', Column('Serial number', 15)),
+        ('sysSoftwareVersion', Column('Software version', 15)),
+        ('sysModel', Column('Model', 25)),
+        (BANDWIDTH, Column('Bandwidth MHz', 15)),
+        ('rmFrequency', Column('Frequency MHz', 15))])
 
     hosts = sorted(hosts, key=lambda host: ','.join(host.parameters['hostLabel']))
     with xlsxwriter.Workbook(report_file) as workbook:
@@ -164,7 +165,9 @@ if __name__ == '__main__':
         make_report(hosts, args.report_file)
         sys.stderr.write("Done at " + str(dt.now() - started_at) + "\n")
         sys.stderr.write("Report available at " + os.path.abspath(args.report_file) + "\n")
-    except Exception as e:
-        sys.stderr.write("Failed: {0}\n".format(str(e)))
-        os.remove(args.report_file)
+    except Exception:
+        sys.stderr.write("Failed:\n")
+        traceback.print_exc()
+        if os.path.exists(args.report_file):
+            os.remove(args.report_file)
         exit(1)
