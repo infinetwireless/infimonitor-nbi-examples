@@ -4,15 +4,15 @@ from examples.performance.make_xlsx_report import *
 
 class MakeExcelReport_format_values_Tests(unittest.TestCase):
     def test_plus_two_aggregates_both_not_empty(self):
-        first = AggregatedParameter()
-        first.plus(10)
-        first.plus(20)
-        first.plus(30)
-        second = AggregatedParameter()
-        second.plus(100)
-        second.plus(200)
+        first = AggregatedValue()
+        first.aggregate(10)
+        first.aggregate(20)
+        first.aggregate(30)
+        second = AggregatedValue()
+        second.aggregate(100)
+        second.aggregate(200)
 
-        first.plus_aggregated(second)
+        first.aggregate_other(second)
 
         self.assertEqual(10, first.min)
         self.assertEqual(200, first.max)
@@ -21,12 +21,12 @@ class MakeExcelReport_format_values_Tests(unittest.TestCase):
         self.assertEqual(type(first.sum), numpy.int64)
 
     def test_plus_two_aggregates_first_is_empty(self):
-        first = AggregatedParameter()
-        second = AggregatedParameter()
-        second.plus(100)
-        second.plus(200)
+        first = AggregatedValue()
+        second = AggregatedValue()
+        second.aggregate(100)
+        second.aggregate(200)
 
-        first.plus_aggregated(second)
+        first.aggregate_other(second)
 
         self.assertEqual(100, first.min)
         self.assertEqual(200, first.max)
@@ -35,13 +35,13 @@ class MakeExcelReport_format_values_Tests(unittest.TestCase):
         self.assertEqual(type(first.sum), numpy.int64)
 
     def test_plus_two_aggregates_second_is_empty(self):
-        first = AggregatedParameter()
-        first.plus(10)
-        first.plus(20)
-        first.plus(30)
-        second = AggregatedParameter()
+        first = AggregatedValue()
+        first.aggregate(10)
+        first.aggregate(20)
+        first.aggregate(30)
+        second = AggregatedValue()
 
-        first.plus_aggregated(second)
+        first.aggregate_other(second)
 
         self.assertEqual(10, first.min)
         self.assertEqual(30, first.max)
