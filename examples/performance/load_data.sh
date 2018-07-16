@@ -9,56 +9,11 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # You should specify your InfiMONITOR host
 # HOST=192.168.200.222
-# read -p "An InfiMONITOR host: " HOST
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-HOST=192.168.103.250
-#HOST=192.168.102.134
-#HOST=192.168.103.243
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+read -p "An InfiMONITOR host: " HOST
 
 # You should copy an integrations API key value from the page https://$HOST/settings.html#/settings/system
 # TOKEN=c7a67f60-002a-470f-b426-39ad3958dd6b
-#read -p "An integrations API key value from the page https://$HOST/settings.html#/settings/system: " TOKEN
-#
-#
-#
-#
-#
-#
-#
-#
-#
-TOKEN=43d93573-8fba-428b-85e6-ccd5b15e73d2
-#TOKEN=2f629b93-6e38-4471-ab08-9c8b177101bd
-#TOKEN=b3b5b63f-e231-444a-b9d7-fb797f05a187
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+read -p "An integrations API key value from the page https://$HOST/settings.html#/settings/system: " TOKEN
 
 URL_BASE=https://${HOST}/api/nbi/v1.beta
 DELETED_AND_DEACTIVATED_PREDICATE="includeDeleted=false&includeDeactivated=false"
@@ -91,10 +46,17 @@ python3 "${SCRIPT_DIR}/../get_json_save_tsv.py" \
   --url "${URL_BASE}/interfaces/all/parameters?parametersNames=${INTERFACES_PARAMETERS}&${DELETED_AND_DEACTIVATED_PREDICATE}" \
   --quantity-of-parts 10 \
   > "${OUT_DIR}/interfaces_parameters.tsv"
-VECTOR_HISTORY_PARAMETERS="currentLevel,retries,bitrate,xgCINR,xgABSRSSI,xgTotalCapacityTx"
-HISTORY_PERIOD_PREDICATE="timestampFromIncl=${FROM}&timestampToExcl=${TO}"
+VECTOR_TYPES_PREDICATE="vectorTypes=MINT,XG"
+VECTORS_CURRENT_PARAMETERS="vectorType"
 python3 "${SCRIPT_DIR}/../get_json_save_tsv.py" \
   --token ${TOKEN} \
-  --url "${URL_BASE}/vectors/all/history?parametersNames=${VECTOR_HISTORY_PARAMETERS}&${HISTORY_PERIOD_PREDICATE}" \
+  --url "${URL_BASE}/vectors/all/parameters?${VECTOR_TYPES_PREDICATE}&parametersNames=${VECTORS_CURRENT_PARAMETERS}&${DELETED_AND_DEACTIVATED_PREDICATE}" \
+  --quantity-of-parts 10 \
+  > "${OUT_DIR}/vectors_parameters.tsv"
+VECTOR_HISTORY_PARAMETERS="currentLevel,retries,bitrate,xgCINR,xgABSRSSI,xgTotalCapacityTx"
+PERIOD_PREDICATE="timestampFromIncl=${FROM}&timestampToExcl=${TO}"
+python3 "${SCRIPT_DIR}/../get_json_save_tsv.py" \
+  --token ${TOKEN} \
+  --url "${URL_BASE}/vectors/all/history?${VECTOR_TYPES_PREDICATE}&parametersNames=${VECTOR_HISTORY_PARAMETERS}&${PERIOD_PREDICATE}" \
   --quantity-of-parts 100 \
   > "${OUT_DIR}/vectors_history.tsv"

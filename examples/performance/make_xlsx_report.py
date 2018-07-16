@@ -103,6 +103,10 @@ class Column:
         self.width = width
         self.sub_columns = sub_columns
 
+LINK_NAME_PARAMETER_NAME = 'linkLabel'
+
+IDENTIFYING_COLUMNS = [
+    Column('Link name', StringParameter(LINK_NAME_PARAMETER_NAME), 35)]
 
 AGGREGATED_COLUMNS_R5000 = [
     Column('Level dB', IntParameter('currentLevel')),
@@ -114,12 +118,8 @@ AGGREGATED_COLUMNS_XG = [
     Column('Absolute RSSI dBm', IntParameter('xgABSRSSI')),
     Column('Total capacity Mbps', FixedPointParameter('xgTotalCapacityTx', 100))]
 
-
-def columns_tree(aggregated_columns):
-    columns = [
-        Column('Host name', StringParameter('hostLabel'), 15),
-        Column('IP address', StringParameter('ipAdEntAddr'), 25)]
-
+def columns_tree(identifying_columns, aggregated_columns):
+    columns = list(identifying_columns)
     for column in aggregated_columns:
         rx_parameter_name = rx_aggregated_parameter_name(column.parameter)
         tx_parameter_name = tx_aggregated_parameter_name(column.parameter)
@@ -133,15 +133,15 @@ def columns_tree(aggregated_columns):
 
         width = 8
         columns.append(
-            Column('Rx {0}'.format(column.display_name), sub_columns=[
-                Column('Avg', AggregatedParameter(rx_parameter_name, partial(avg, column)), width),
-                Column('Min', AggregatedParameter(rx_parameter_name, partial(min, column)), width),
-                Column('Max', AggregatedParameter(rx_parameter_name, partial(max, column)), width)]))
-        columns.append(
             Column('Tx {0}'.format(column.display_name), sub_columns=[
                 Column('Avg', AggregatedParameter(tx_parameter_name, partial(avg, column)), width),
                 Column('Min', AggregatedParameter(tx_parameter_name, partial(min, column)), width),
                 Column('Max', AggregatedParameter(tx_parameter_name, partial(max, column)), width)]))
+        columns.append(
+            Column('Rx {0}'.format(column.display_name), sub_columns=[
+                Column('Avg', AggregatedParameter(rx_parameter_name, partial(avg, column)), width),
+                Column('Min', AggregatedParameter(rx_parameter_name, partial(min, column)), width),
+                Column('Max', AggregatedParameter(rx_parameter_name, partial(max, column)), width)]))
     return Column(None, None, sub_columns=columns)
 
 
@@ -164,6 +164,14 @@ class Host:
             self.parameters[parameter_name] = []  # some parameters can be multivalued, like IP address
         self.parameters[parameter_name].append(parameter_value)
 
+    def label(self):
+        if 'hostLabel' not in self.parameters:
+            return NO_DATA
+        values = self.parameters['hostLabel']
+        if len(values) < 1:
+            return NO_DATA
+        return values[0]
+
 
 class Link:
     def __init__(self, host_a_uuid, host_b_uuid, vector_a_uuid, vector_b_uuid):
@@ -171,6 +179,17 @@ class Link:
         self.host_b_uuid = host_b_uuid
         self.vector_a_uuid = vector_a_uuid
         self.vector_b_uuid = vector_b_uuid
+        self.parameters = {}
+        self.host_a = None
+        self.host_b = None
+
+    def label(self):
+        def host_label(host):
+            if host is None:
+                return NO_DATA
+            else:
+                return host.label()
+        return host_label(self.host_a) + '→' + host_label(self.host_b)
 
 
 class Vector:
@@ -244,26 +263,32 @@ def read_aggregated_vectors(data_dir, name_to_parameter):
 
 
 def read_links(data_dir):
+    with open(data_dir + '/vectors_parameters.tsv', 'rt') as file:
+        reader = csv.reader(file, dialect='excel-tab')
+        next(reader, None)  # skip headers
+        uuid_to_vector_type = {}
+        for vector_uuid, parameter_name, _, _, value in reader:
+            if parameter_name == 'vectorType':
+                uuid_to_vector_type[vector_uuid] = value
     with open(data_dir + '/links.tsv', 'rt') as file:
         reader = csv.reader(file, dialect='excel-tab')
         next(reader, None)  # skip headers
         links = []
         for _, _, _, host_a_uuid, host_b_uuid, _, _, vector_a_uuid, vector_b_uuid in reader:
-            links.append(Link(host_a_uuid, host_b_uuid, vector_a_uuid, vector_b_uuid))
+            # vectors_parameters.tsv used to filter out links with types other than radio
+            # operator or cause one of the vector may be absent
+            if vector_a_uuid in uuid_to_vector_type or vector_b_uuid in uuid_to_vector_type:
+                links.append(Link(host_a_uuid, host_b_uuid, vector_a_uuid, vector_b_uuid))
         return links
 
 
-def enrich_hosts_parameters(host_uuid_to_host, links, uuid_to_aggregated_vector, parameters):
+def enrich_links(links, parameters, uuid_to_host, uuid_to_aggregated_vector):
     for link in links:
-        if link.host_a_uuid not in host_uuid_to_host or \
-                link.host_b_uuid not in host_uuid_to_host or \
-                link.vector_a_uuid not in uuid_to_aggregated_vector or \
-                link.vector_a_uuid not in uuid_to_aggregated_vector:
-            continue  # hosts, links and vectors are loaded separately so they may be a bit inconsistent
-        host_a = host_uuid_to_host[link.host_a_uuid]
-        host_b = host_uuid_to_host[link.host_b_uuid]
-        aggregated_vector_a = uuid_to_aggregated_vector[link.vector_a_uuid]
-        aggregated_vector_b = uuid_to_aggregated_vector[link.vector_b_uuid]
+        link.host_a = uuid_to_host.get(link.host_a_uuid)
+        link.host_b = uuid_to_host.get(link.host_b_uuid)
+        link.parameters[LINK_NAME_PARAMETER_NAME] = [link.label()]
+        aggregated_vector_a = uuid_to_aggregated_vector.get(link.vector_a_uuid, Vector())
+        aggregated_vector_b = uuid_to_aggregated_vector.get(link.vector_b_uuid, Vector())
         for parameter in parameters:
             tx_parameter_name = tx_aggregated_parameter_name(parameter)
             rx_parameter_name = rx_aggregated_parameter_name(parameter)
@@ -271,10 +296,8 @@ def enrich_hosts_parameters(host_uuid_to_host, links, uuid_to_aggregated_vector,
             aggregated_vector_a_parameter = aggregated_vector_a.parameters.get(parameter.name, [])
             aggregated_vector_b_parameter = aggregated_vector_b.parameters.get(parameter.name, [])
 
-            host_a.append_parameter_value(tx_parameter_name, aggregated_vector_a_parameter)
-            host_a.append_parameter_value(rx_parameter_name, aggregated_vector_b_parameter)
-            host_b.append_parameter_value(tx_parameter_name, aggregated_vector_b_parameter)
-            host_b.append_parameter_value(rx_parameter_name, aggregated_vector_a_parameter)
+            link.parameters[tx_parameter_name] = aggregated_vector_a_parameter
+            link.parameters[rx_parameter_name] = aggregated_vector_b_parameter
 
 
 def make_header(worksheet, columns_tree, header_format, height):
@@ -316,7 +339,7 @@ def make_header(worksheet, columns_tree, header_format, height):
     return leaf_columns
 
 
-class HostsView:
+class LinksView:
     def __init__(self, name, aggregated_columns, filter):
         self.name = name
         self.aggregated_columns = aggregated_columns
@@ -325,8 +348,11 @@ class HostsView:
 
 
 def make_report(data_dir, report_file):
-    views = [HostsView("R5000", AGGREGATED_COLUMNS_R5000, lambda host: host.parameters['productFamily'] != ['XG']),
-             HostsView("XG", AGGREGATED_COLUMNS_XG, lambda host: host.parameters['productFamily'] == ['XG'])]
+    views = [
+        LinksView("R5000 radio", AGGREGATED_COLUMNS_R5000,
+                  lambda link: link.host_a.parameters['productFamily'] != ['XG']),
+        LinksView("XG radio", AGGREGATED_COLUMNS_XG,
+                  lambda link: link.host_a.parameters['productFamily'] == ['XG'])]
     name_to_parameter = {parameter.name: parameter for view in views for parameter in view.aggregated_parameters}
 
     with xlsxwriter.Workbook(report_file) as workbook:
@@ -336,21 +362,21 @@ def make_report(data_dir, report_file):
         header_format.set_align('vcenter')
         header_format.set_border()
 
-        host_uuid_to_host = read_hosts(data_dir)
+        uuid_to_host = read_hosts(data_dir)
         uuid_to_aggregated_vector = read_aggregated_vectors(data_dir, name_to_parameter)
         links = read_links(data_dir)
-        enrich_hosts_parameters(host_uuid_to_host, links, uuid_to_aggregated_vector, name_to_parameter.values())
+        enrich_links(links, name_to_parameter.values(), uuid_to_host, uuid_to_aggregated_vector)
 
         for view in views:
             worksheet = workbook.add_worksheet(view.name)
-            hosts = host_uuid_to_host.values()
-            hosts = filter(view.filter, hosts)
-            hosts = list(hosts)
-            hosts = sorted(hosts, key=lambda host: ','.join(host.parameters['hostLabel']))
-            leaf_columns = make_header(worksheet, columns_tree(view.aggregated_columns), header_format, 2)
-            for i, host in enumerate(hosts, 2):
+            view_links = filter(view.filter, links)
+            view_links = list(view_links)
+            view_links = sorted(view_links, key=lambda link: link.label())
+            view_columns_tree = columns_tree(IDENTIFYING_COLUMNS, view.aggregated_columns)
+            leaf_columns = make_header(worksheet, view_columns_tree, header_format, 2)
+            for i, link in enumerate(view_links, 2):
                 for j, column in enumerate(leaf_columns):
-                    worksheet.write(i, j, format_values(column, host))
+                    worksheet.write(i, j, format_values(column, link))
 
 
 def format_values(column, host):
@@ -363,11 +389,10 @@ def format_values(column, host):
     if column.parameter.name == 'ipAdEntAddr':
         values = sorted(filter(lambda x: x != '127.0.0.1', values))
     if type(column.parameter) is AggregatedParameter:
-        new_values = []
-        for sub_values in values:
-            if len(sub_values) > 0:
-                new_values.append(max(map(column.parameter.inner_to_xlsx_value, sub_values)))
-        values = new_values
+        if len(values) == 0:
+            return NO_DATA
+        return max(map(column.parameter.inner_to_xlsx_value, values))
+
     values = list(values)
     if len(values) == 0:
         return NO_DATA
@@ -383,7 +408,7 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('--report-file',
                         help='path to excel report file',
-                        default='inventory.xlsx')
+                        default='performance.xlsx')
     args = parser.parse_args()
 
     started_at = dt.now()
