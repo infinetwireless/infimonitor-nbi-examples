@@ -8,8 +8,10 @@ import sys
 import traceback
 import xlsxwriter
 
-IS_FLOAT_REGEXP = re.compile('^\d+(\.\d+)?$')
+NO_DATA = 'N/A'
+IS_FLOATING_POINT_NUMBER_REGEXP = re.compile('^\d+(\.\d+)?$')
 BANDWIDTH = 'BANDWIDTH'
+FREQUENCY = 'FREQUENCY'
 
 
 class Interface:
@@ -24,9 +26,15 @@ class Host:
         self.parameters = {}
         self.interfaces = {}
 
+    def is_xg(self):
+        return self.parameters['productFamily'][0] == 'XG'
+
+    def is_xg_master(self):
+        return self.parameters['xgUnitType'][0] == 'MASTER'
+
     def add_parameter_value(self, parameter_name, parameter_value):
         if parameter_name not in self.parameters:
-            self.parameters[parameter_name] = []  # some host parameters can be multivalued
+            self.parameters[parameter_name] = []  # host parameters are multivalued
         self.parameters[parameter_name].append(parameter_value)
 
     def add_iface_parameter_value(self, iface_uuid, parameter_name, parameter_value):
@@ -34,8 +42,11 @@ class Host:
             self.interfaces[iface_uuid] = Interface()
         iface = self.interfaces[iface_uuid]
         if parameter_name not in iface.parameters:
-            iface.parameters[parameter_name] = []  # some interface parameters can be multivalued
+            iface.parameters[parameter_name] = []  # interface parameters are multivalued
         iface.parameters[parameter_name].append(parameter_value)
+
+    def add_vector_parameter_value(self, vector_uuid, parameter_name, parameter_value):
+        self.add_parameter_value(parameter_name, parameter_value)
 
 
 class Column:
@@ -59,12 +70,20 @@ def read_hosts(data_dir):
         for host_uuid, iface_uuid, exists, activated in reader:
             iface_uuid_to_host_uuid[iface_uuid] = host_uuid
 
+    vector_uuid_to_host_uuid = {}
+    with open(data_dir + '/hosts_interfaces_vectors.tsv', 'rt') as file:
+        reader = csv.reader(file, dialect='excel-tab')
+        next(reader, None)  # skip headers
+        for host_uuid, iface_uuid, vector_uuid, exists, activated in reader:
+            vector_uuid_to_host_uuid[vector_uuid] = host_uuid
+
     with open(data_dir + '/hosts_parameters.tsv', 'rt') as file:
         reader = csv.reader(file, dialect='excel-tab')
         next(reader, None)  # skip headers
         for host_uuid, parameter_name, timestamp, index, value in reader:
             if host_uuid not in host_uuid_to_host:
-                continue  # hosts and its parameters are loaded separately so they may be a bit inconsistent
+                # hosts_parameters.tsv and hosts.tsv are loaded separately, so they may be a bit inconsistent
+                continue
             host = host_uuid_to_host[host_uuid]
             host.add_parameter_value(parameter_name, value)
 
@@ -73,16 +92,36 @@ def read_hosts(data_dir):
         next(reader, None)  # skip headers
         for iface_uuid, parameter_name, timestamp, index, value in reader:
             if iface_uuid not in iface_uuid_to_host_uuid:
-                continue  # hosts_interfaces and interfaces parameters are loaded separately so they may be a bit inconsistent
+                # interfaces_parameters.tsv and hosts_interfaces.tsv are loaded separately,
+                # so they may be a bit inconsistent
+                continue
             host_uuid = iface_uuid_to_host_uuid[iface_uuid]
+            if host_uuid not in host_uuid_to_host:
+                # interfaces_parameters.tsv and hosts.tsv are loaded separately, so they may be a bit inconsistent
+                continue
             host = host_uuid_to_host[host_uuid]
             host.add_iface_parameter_value(iface_uuid, parameter_name, value)
+
+    with open(data_dir + '/vectors_parameters.tsv', 'rt') as file:
+        reader = csv.reader(file, dialect='excel-tab')
+        next(reader, None)  # skip headers
+        for vector_uuid, parameter_name, timestamp, index, value in reader:
+            if vector_uuid not in vector_uuid_to_host_uuid:
+                # vectors_parameters.tsv and hosts_interfaces_vectors.tsv are loaded separately,
+                # so they may be a bit inconsistent
+                continue
+            host_uuid = vector_uuid_to_host_uuid[vector_uuid]
+            if host_uuid not in host_uuid_to_host:
+                # vectors_parameters.tsv and hosts.tsv are loaded separately, so they may be a bit inconsistent
+                continue
+            host = host_uuid_to_host[host_uuid]
+            host.add_vector_parameter_value(vector_uuid, parameter_name, value)
 
     return host_uuid_to_host.values()
 
 
 def format_values(host, parameter_name):
-    def format_host_values():
+    def host_values():
         values = host.parameters[parameter_name]
         if parameter_name == 'hostLabel':
             if not host.exists:
@@ -94,7 +133,7 @@ def format_values(host, parameter_name):
             values = list(values)
         return values
 
-    def format_ifaces_values():
+    def ifaces_values():
         values = []
         for iface in host.interfaces.values():
             if parameter_name in ['rmBandwidth', 'rmFrequency'] and iface.parameters['ifDescr'][0].startswith("prf"):
@@ -108,17 +147,24 @@ def format_values(host, parameter_name):
         return values
 
     if parameter_name == BANDWIDTH:
-        if host.parameters['productFamily'][0] == 'XG':
+        if host.is_xg():
             return format_values(host, 'xgChannelWidth')
         else:
             return format_values(host, 'rmBandwidth')
+    if parameter_name == FREQUENCY:
+        if host.is_xg():
+            if host.is_xg_master():
+                return format_values(host, 'xgCcFreqDl')
+            return format_values(host, 'xgCcFreqUl')
+        else:
+            return format_values(host, 'rmFrequency')
     elif parameter_name in host.parameters:
-        values = format_host_values()
+        values = host_values()
     else:
-        values = format_ifaces_values()
+        values = ifaces_values()
     if not values:
-        return '-'
-    if len(values) == 1 and IS_FLOAT_REGEXP.match(values[0]):
+        return NO_DATA
+    if len(values) == 1 and IS_FLOATING_POINT_NUMBER_REGEXP.match(values[0]):
         return float(values[0])
     return ', '.join(values)
 
@@ -132,7 +178,7 @@ def make_report(hosts, report_file):
         ('sysSoftwareVersion', Column('Software version', 15)),
         ('sysModel', Column('Model', 25)),
         (BANDWIDTH, Column('Bandwidth MHz', 15)),
-        ('rmFrequency', Column('Frequency MHz', 15))])
+        (FREQUENCY, Column('Frequency MHz', 15))])
 
     hosts = sorted(hosts, key=lambda host: ','.join(host.parameters['hostLabel']))
     with xlsxwriter.Workbook(report_file) as workbook:

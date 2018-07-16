@@ -29,7 +29,12 @@ python3 "${SCRIPT_DIR}/../get_json_save_tsv.py" \
   --url "${URL_BASE}/hosts/all/interfaces?${DELETED_AND_DEACTIVATED_PREDICATE}" \
   --quantity-of-parts 10 \
   > "${OUT_DIR}/hosts_interfaces.tsv"
-HOST_PARAMETERS="hostLabel,productFamily,sysSerialNumber,sysSoftwareVersion,sysModel,xgChannelWidth"
+python3 "${SCRIPT_DIR}/../get_json_save_tsv.py" \
+  --token ${TOKEN} \
+  --url "${URL_BASE}/hosts/all/interfaces/all/vectors?${DELETED_AND_DEACTIVATED_PREDICATE}" \
+  --quantity-of-parts 10 \
+  > "${OUT_DIR}/hosts_interfaces_vectors.tsv"
+HOST_PARAMETERS="hostLabel,productFamily,sysSerialNumber,sysSoftwareVersion,sysModel,xgChannelWidth,xgUnitType"
 python3 "${SCRIPT_DIR}/../get_json_save_tsv.py" \
   --token ${TOKEN} \
   --url "${URL_BASE}/hosts/all/parameters?parametersNames=${HOST_PARAMETERS}&${DELETED_AND_DEACTIVATED_PREDICATE}" \
@@ -41,3 +46,9 @@ python3 "${SCRIPT_DIR}/../get_json_save_tsv.py" \
   --url "${URL_BASE}/interfaces/all/parameters?parametersNames=${INTERFACES_PARAMETERS}&${DELETED_AND_DEACTIVATED_PREDICATE}" \
   --quantity-of-parts 10 \
   > "${OUT_DIR}/interfaces_parameters.tsv"
+VECTORS_PARAMETERS="xgCcFreqDl,xgCcFreqUl"
+python3 "${SCRIPT_DIR}/../get_json_save_tsv.py" \
+  --token ${TOKEN} \
+  --url "${URL_BASE}/vectors/all/parameters?parametersNames=${VECTORS_PARAMETERS}&${DELETED_AND_DEACTIVATED_PREDICATE}" \
+  --quantity-of-parts 10 \
+  > "${OUT_DIR}/vectors_parameters.tsv"
