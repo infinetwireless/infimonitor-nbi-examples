@@ -1,6 +1,7 @@
 import argparse
 import csv
 from datetime import datetime as dt
+import math
 import numpy
 import os
 import sys
@@ -44,15 +45,6 @@ class FixedPointParameter:
         return value / self.scaling_factor
 
 
-class AggregatedParameter:
-    def __init__(self, name, inner_to_xlsx_value_function):
-        self.name = name
-        self.inner_to_xlsx_value_function = inner_to_xlsx_value_function
-
-    def inner_to_xlsx_value(self, value):
-        return self.inner_to_xlsx_value_function(value)
-
-
 class AggregatedValue:
     def __init__(self):
         self.min = None
@@ -83,74 +75,87 @@ class AggregatedValue:
         self.sum += numpy.int64(value)
         self.count += 1
 
-    def aggregate_other(self, other):
-        if self.count == 0:
-            self.min = other.min
-            self.max = other.max
-            self.sum = other.sum
-            self.count = other.count
-        elif other.count != 0:
-            self.min = min(self.min, other.min)
-            self.max = max(self.max, other.max)
-            self.sum = self.sum + other.sum
-            self.count = self.count + other.count
-
 
 class Column:
-    def __init__(self, display_name, parameter=None, width=None, sub_columns=[]):
+    def __init__(self, display_name, formatter=None, width=None, sub_columns=[]):
         self.display_name = display_name
-        self.parameter = parameter
+        self.format_values = formatter
         self.width = width
         self.sub_columns = sub_columns
 
-LINK_NAME_PARAMETER_NAME = 'linkLabel'
 
-IDENTIFYING_COLUMNS = [
-    Column('Link name', StringParameter(LINK_NAME_PARAMETER_NAME), 35)]
+class ColumnPrototype:
+    def __init__(self, column_display_name, parameter):
+        self.column_display_name = column_display_name
+        self.parameter = parameter
 
-AGGREGATED_COLUMNS_R5000 = [
-    Column('Level dB', IntParameter('currentLevel')),
-    Column('Retries %', IntParameter('retries')),
-    Column('Bitrate Mbps', IntParameter('bitrate'))]
 
-AGGREGATED_COLUMNS_XG = [
-    Column('CINR dBm', IntParameter('xgCINR')),
-    Column('Absolute RSSI dBm', IntParameter('xgABSRSSI')),
-    Column('Total capacity Mbps', FixedPointParameter('xgTotalCapacityTx', 100))]
+R5000_AGGREGATED_COLUMNS_PROTOTYPES = [
+    ColumnPrototype('Rx Level dB', IntParameter('currentLevel')),
+    ColumnPrototype('Tx retries %', IntParameter('retries')),
+    ColumnPrototype('Tx bitrate Mbps', IntParameter('bitrate'))]
 
-def columns_tree(identifying_columns, aggregated_columns):
-    columns = list(identifying_columns)
-    for column in aggregated_columns:
-        rx_parameter_name = rx_aggregated_parameter_name(column.parameter)
-        tx_parameter_name = tx_aggregated_parameter_name(column.parameter)
-        avg = lambda column, aggregated_value: float(int(
-            column.parameter.inner_to_xlsx_value(100 * aggregated_value.sum / aggregated_value.count))) / 100
-        min = lambda column, aggregated_value: column.parameter.inner_to_xlsx_value(aggregated_value.min)
-        max = lambda column, aggregated_value: column.parameter.inner_to_xlsx_value(aggregated_value.max)
+XG_AGGREGATED_COLUMNS_PROTOTYPES = [
+    ColumnPrototype('CINR dBm', IntParameter('xgCINR')),
+    ColumnPrototype('absolute RSSI dBm', IntParameter('xgABSRSSI')),
+    ColumnPrototype('total Tx capacity Mbps', FixedPointParameter('xgTotalCapacityTx', 100))]
 
-        def partial(aggregating_function, column):  # put column in a produced function scope
-            return lambda aggregated_value: aggregating_function(column, aggregated_value)
 
-        width = 8
+def columns_tree(aggregated_columns_prototypes):
+    def create_formatter(link_to_vector, parameter, aggregated_value_transform):
+        return lambda link: format_vector(link_to_vector(link), parameter, aggregated_value_transform)
+
+    def link_to_vector_a(link):
+        return link.vector_a
+
+    def link_to_vector_b(link):
+        return link.vector_b
+
+    columns = [Column('Link', sub_columns=[
+        Column('Host A', lambda link: host_label(link.host_a), 12),
+        Column('Host B', lambda link: host_label(link.host_b), 12)])]
+    for prototype in aggregated_columns_prototypes:
+        column_display_name, parameter = prototype.column_display_name, prototype.parameter
+        width = 9
         columns.append(
-            Column('Tx {0}'.format(column.display_name), sub_columns=[
-                Column('Avg', AggregatedParameter(tx_parameter_name, partial(avg, column)), width),
-                Column('Min', AggregatedParameter(tx_parameter_name, partial(min, column)), width),
-                Column('Max', AggregatedParameter(tx_parameter_name, partial(max, column)), width)]))
+            Column('Host A {0}'.format(column_display_name), sub_columns=[
+                Column('Avg', create_formatter(link_to_vector_a, parameter, aggregated_avg), width),
+                Column('Min', create_formatter(link_to_vector_a, parameter, aggregated_min), width),
+                Column('Max', create_formatter(link_to_vector_a, parameter, aggregated_max), width)]))
         columns.append(
-            Column('Rx {0}'.format(column.display_name), sub_columns=[
-                Column('Avg', AggregatedParameter(rx_parameter_name, partial(avg, column)), width),
-                Column('Min', AggregatedParameter(rx_parameter_name, partial(min, column)), width),
-                Column('Max', AggregatedParameter(rx_parameter_name, partial(max, column)), width)]))
-    return Column(None, None, sub_columns=columns)
+            Column('Host B {0}'.format(column_display_name), sub_columns=[
+                Column('Avg', create_formatter(link_to_vector_b, parameter, aggregated_avg), width),
+                Column('Min', create_formatter(link_to_vector_b, parameter, aggregated_min), width),
+                Column('Max', create_formatter(link_to_vector_b, parameter, aggregated_max), width)]))
+    return Column(None, sub_columns=columns)
 
 
-def tx_aggregated_parameter_name(parameter):
-    return 'TX_{0}'.format(parameter.name.upper())
+def aggregated_avg(aggregated_value, inner_to_xlsx_value):
+    if not aggregated_value.count:
+        return float('NaN')
+    return int(inner_to_xlsx_value(aggregated_value.sum) * 100 / aggregated_value.count) / 100
 
 
-def rx_aggregated_parameter_name(parameter):
-    return 'RX_{0}'.format(parameter.name.upper())
+def aggregated_min(aggregated_value, inner_to_xlsx_value):
+    return inner_to_xlsx_value(aggregated_value.min)
+
+
+def aggregated_max(aggregated_value, inner_to_xlsx_value):
+    return inner_to_xlsx_value(aggregated_value.max)
+
+
+def format_vector(vector, parameter, aggregated_value_transform):
+    if vector is None:
+        return NO_DATA
+    aggregated_values = vector.parameters.get(parameter.name)
+    if not aggregated_values:
+        return NO_DATA
+    values = map(lambda value: aggregated_value_transform(value, parameter.inner_to_xlsx_value), aggregated_values)
+    values = filter(lambda value: not math.isnan(value), values)
+    values = list(values)
+    if len(values) < 1:
+        return NO_DATA
+    return max(values)
 
 
 class Host:
@@ -172,6 +177,23 @@ class Host:
             return NO_DATA
         return values[0]
 
+    def ips(host):
+        if not host:
+            return NO_DATA
+        if 'ipAdEntAddr' not in host.parameters:
+            return NO_DATA
+        values = host.parameters['ipAdEntAddr']
+        values = filter(lambda value: value != '127.0.0.1', values)
+        values = sorted(values)
+        return ", ".join(values)
+
+    def is_xg(self):
+        return self.parameters['productFamily'][0] == 'XG'
+
+
+def host_label(host):
+    return host.label() if host else NO_DATA
+
 
 class Link:
     def __init__(self, host_a_uuid, host_b_uuid, vector_a_uuid, vector_b_uuid):
@@ -182,14 +204,14 @@ class Link:
         self.parameters = {}
         self.host_a = None
         self.host_b = None
+        self.vector_a = None
+        self.vector_b = None
 
     def label(self):
-        def host_label(host):
-            if host is None:
-                return NO_DATA
-            else:
-                return host.label()
         return host_label(self.host_a) + '→' + host_label(self.host_b)
+
+    def is_xg(self):
+        return self.host_a.is_xg()  # always same as self.host_b.is_xg()
 
 
 class Vector:
@@ -236,7 +258,8 @@ def read_hosts(data_dir):
         next(reader, None)  # skip headers
         for iface_uuid, parameter_name, timestamp, index, value in reader:
             if iface_uuid not in iface_uuid_to_host_uuid:
-                continue  # hosts_interfaces and interfaces parameters are loaded separately so they may be a bit inconsistent
+                # hosts_interfaces and interfaces parameters are loaded separately. so they may be a bit inconsistent
+                continue
             host_uuid = iface_uuid_to_host_uuid[iface_uuid]
             host = host_uuid_to_host[host_uuid]
             host.append_parameter_value(parameter_name, value)
@@ -282,22 +305,12 @@ def read_links(data_dir):
         return links
 
 
-def enrich_links(links, parameters, uuid_to_host, uuid_to_aggregated_vector):
+def enrich_links(links, uuid_to_host, uuid_to_aggregated_vector):
     for link in links:
         link.host_a = uuid_to_host.get(link.host_a_uuid)
         link.host_b = uuid_to_host.get(link.host_b_uuid)
-        link.parameters[LINK_NAME_PARAMETER_NAME] = [link.label()]
-        aggregated_vector_a = uuid_to_aggregated_vector.get(link.vector_a_uuid, Vector())
-        aggregated_vector_b = uuid_to_aggregated_vector.get(link.vector_b_uuid, Vector())
-        for parameter in parameters:
-            tx_parameter_name = tx_aggregated_parameter_name(parameter)
-            rx_parameter_name = rx_aggregated_parameter_name(parameter)
-
-            aggregated_vector_a_parameter = aggregated_vector_a.parameters.get(parameter.name, [])
-            aggregated_vector_b_parameter = aggregated_vector_b.parameters.get(parameter.name, [])
-
-            link.parameters[tx_parameter_name] = aggregated_vector_a_parameter
-            link.parameters[rx_parameter_name] = aggregated_vector_b_parameter
+        link.vector_a = uuid_to_aggregated_vector.get(link.vector_a_uuid)
+        link.vector_b = uuid_to_aggregated_vector.get(link.vector_a_uuid)
 
 
 def make_header(worksheet, columns_tree, header_format, height):
@@ -340,20 +353,18 @@ def make_header(worksheet, columns_tree, header_format, height):
 
 
 class LinksView:
-    def __init__(self, name, aggregated_columns, filter):
+    def __init__(self, name, aggregated_columns_prototypes, filter):
         self.name = name
-        self.aggregated_columns = aggregated_columns
-        self.aggregated_parameters = list(map(lambda column: column.parameter, aggregated_columns))
+        self.aggregated_columns_prototypes = aggregated_columns_prototypes
         self.filter = filter
 
 
 def make_report(data_dir, report_file):
-    views = [
-        LinksView("R5000 radio", AGGREGATED_COLUMNS_R5000,
-                  lambda link: link.host_a.parameters['productFamily'] != ['XG']),
-        LinksView("XG radio", AGGREGATED_COLUMNS_XG,
-                  lambda link: link.host_a.parameters['productFamily'] == ['XG'])]
-    name_to_parameter = {parameter.name: parameter for view in views for parameter in view.aggregated_parameters}
+    views = [LinksView("R5000 radio", R5000_AGGREGATED_COLUMNS_PROTOTYPES, lambda link: not link.is_xg()),
+             LinksView("XG radio", XG_AGGREGATED_COLUMNS_PROTOTYPES, lambda link: link.is_xg())]
+    name_to_parameter = {prototype.parameter.name: prototype.parameter
+                         for view in views
+                         for prototype in view.aggregated_columns_prototypes}
 
     with xlsxwriter.Workbook(report_file) as workbook:
         header_format = workbook.add_format()
@@ -365,40 +376,18 @@ def make_report(data_dir, report_file):
         uuid_to_host = read_hosts(data_dir)
         uuid_to_aggregated_vector = read_aggregated_vectors(data_dir, name_to_parameter)
         links = read_links(data_dir)
-        enrich_links(links, name_to_parameter.values(), uuid_to_host, uuid_to_aggregated_vector)
+        enrich_links(links, uuid_to_host, uuid_to_aggregated_vector)
 
         for view in views:
             worksheet = workbook.add_worksheet(view.name)
             view_links = filter(view.filter, links)
             view_links = list(view_links)
             view_links = sorted(view_links, key=lambda link: link.label())
-            view_columns_tree = columns_tree(IDENTIFYING_COLUMNS, view.aggregated_columns)
+            view_columns_tree = columns_tree(view.aggregated_columns_prototypes)
             leaf_columns = make_header(worksheet, view_columns_tree, header_format, 2)
             for i, link in enumerate(view_links, 2):
                 for j, column in enumerate(leaf_columns):
-                    worksheet.write(i, j, format_values(column, link))
-
-
-def format_values(column, host):
-    if column.parameter.name not in host.parameters:
-        return NO_DATA
-    values = host.parameters[column.parameter.name]
-    if values is None:
-        return NO_DATA
-
-    if column.parameter.name == 'ipAdEntAddr':
-        values = sorted(filter(lambda x: x != '127.0.0.1', values))
-    if type(column.parameter) is AggregatedParameter:
-        if len(values) == 0:
-            return NO_DATA
-        return max(map(column.parameter.inner_to_xlsx_value, values))
-
-    values = list(values)
-    if len(values) == 0:
-        return NO_DATA
-    if len(values) == 1:
-        return values[0]
-    return ', '.join(map(lambda x: str(x), values))
+                    worksheet.write(i, j, column.format_values(link))
 
 
 if __name__ == '__main__':
