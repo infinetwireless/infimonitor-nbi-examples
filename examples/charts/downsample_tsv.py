@@ -5,7 +5,7 @@ import re
 import numpy as np
 from datetime import datetime as dt
 from heapq import heappush, heappop, heapify
-from examples.lttb import downsample as lttb_downsample
+from examples.charts.lttb import downsample as lttb_downsample
 
 GAP_VALUE = 'null'
 

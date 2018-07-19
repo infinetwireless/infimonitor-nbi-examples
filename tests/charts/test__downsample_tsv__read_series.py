@@ -1,5 +1,5 @@
 import unittest
-from examples.downsample_tsv import read_series
+from examples.charts.downsample_tsv import read_series
 
 HEADER = ['nmsObjectUuid', 'parameterName', 'timestamp', 'index', 'value']
 DATETIME = list(map(lambda x: '2000-01-01T00:00:' + str(x).zfill(2) + 'Z', range(6)))

@@ -14,8 +14,7 @@ import win32com.client
 
 # Import dynamically generated com interface modules
 # for Microsoft Office Object Library and Microsoft Excel Object Library
-from examples.ms import MSO
-from examples.ms import MSE
+from examples.charts.ms import MSE, MSO
 
 quiet = False
 

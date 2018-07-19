@@ -4,7 +4,7 @@ REM All paths variables are related to directory where this script is localed
 SET SCRIPT_DIR=%~dp0
 
 REM Initialize common variables in a single place
-CALL "%SCRIPT_DIR%\common_variables.bat"
+CALL "%SCRIPT_DIR%\settings.bat"
 
 REM You should specify your InfiMONITOR host
 REM SET HOST=192.168.200.222
@@ -26,10 +26,9 @@ SET OUT_DIR=%DEFAULT_OUT_DIR%
 REM or can be specified manually:
 REM SET OUT_DIR=%SCRIPT_DIR%\..\out\2017-06
 
-SET PATH_PREFIX=/api/nbi/v1.beta
-SET URL_BASE=https://%HOST%%PATH_PREFIX%
-
 IF NOT EXIST "%OUT_DIR%" MKDIR "%OUT_DIR%"
+
+SET URL_BASE=https://%HOST%/api/nbi/v1.beta
 python "%SCRIPT_DIR%\get_json_save_tsv.py" ^
   --token %TOKEN% ^
   --url "%URL_BASE%/links?includeDeleted=true&includeDeactivated=true" ^

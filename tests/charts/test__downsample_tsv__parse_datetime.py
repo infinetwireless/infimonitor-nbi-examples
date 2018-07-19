@@ -1,5 +1,5 @@
 import unittest
-from examples.downsample_tsv import parse_datetime
+from examples.charts.downsample_tsv import parse_datetime
 
 
 class DownsampleTSV_ParseDateTime_Tests(unittest.TestCase):

@@ -1,5 +1,5 @@
 import unittest
-from examples.get_json_save_tsv import reencode_query_string
+from examples.load_data.get_json_save_tsv import reencode_query_string
 
 
 class GetJSONSaveTSV_ReencodeQueryString_Tests(unittest.TestCase):

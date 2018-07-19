@@ -4,7 +4,7 @@ REM All paths variables are related to directory where this script is localed
 SET SCRIPT_DIR=%~dp0
 
 REM Initialize common variables in a single place
-CALL "%SCRIPT_DIR%\common_variables.bat"
+CALL "%SCRIPT_DIR%\settings.bat"
 
 REM Input and output files directory. By default it is last month named directory like ..\out\2017-06
 SET OUT_DIR=%DEFAULT_OUT_DIR%

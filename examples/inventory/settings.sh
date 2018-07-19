@@ -11,3 +11,6 @@ TODAY=$(date '+%Y-%m-%d')
 OUT_DIR=${SCRIPT_DIR}/../../out/${REPORT_NAME}/${TODAY}
 # or can be specified manually:
 # OUT_DIR=$SCRIPT_DIR/../../out/inventory/2018-06-27
+
+# Specifies where to find imported modules for python scripts
+export PYTHONPATH="$(realpath "${SCRIPT_DIR}/../..")"

@@ -6,7 +6,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 REPORT_NAME=performance
 
-# A default date-time window of the loaded parameters history. Last month by default,
+# A default date-time window of the loaded parameters history. Last full day i.e. yesterday by default,
 FROM=$(date --date='-1 day' '+%Y-%m-%dT00:00%:z')
 TO=$(date                   '+%Y-%m-%dT00:00%:z')
 # or can be specified manually as something like:

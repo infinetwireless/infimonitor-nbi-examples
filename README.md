@@ -94,4 +94,4 @@ Script **load_data_and_make_excel_report.bat** - all in one to get data from Inf
 downsample it and to generate a MS Excel report for a last month.
 
 Default values such as an output directory or a report dates window corresponding to a last month 
-are specified in files **common_variables.bat** or **common_variables.sh**
+are specified in files **settings.bat** or **settings.sh**

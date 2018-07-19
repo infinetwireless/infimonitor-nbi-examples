@@ -1,5 +1,5 @@
 import unittest
-from examples.downsample_tsv import GAP_VALUE, distribute_points_among_series_parts
+from examples.charts.downsample_tsv import GAP_VALUE, distribute_points_among_series_parts
 
 DATETIME = list(map(lambda x: '2000-01-01T00:' + str(x).zfill(2) + ':00Z', range(11)))
 VALUE = list(map(lambda x: 100.0 + float(x), range(11)))
