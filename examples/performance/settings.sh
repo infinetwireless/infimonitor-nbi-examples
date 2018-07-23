@@ -13,11 +13,11 @@ TO=$(date                   '+%Y-%m-%dT00:00%:z')
 # FROM=2017-06-01T00:00:00.000+05:00
 # TO=2017-07-01T00:00:00.000+05:00
 
-# A default output files directory. It is specified as a last full day i.e. yesterday like ../out/2018-07-04
+# A default output files directory. It is specified as a last full day i.e. yesterday like .../2018-07-04
 YESTERDAY=$(date --date='-1 day' '+%Y-%m-%d')
 OUT_DIR=${SCRIPT_DIR}/../../out/${REPORT_NAME}/${YESTERDAY}
 # or can be specified manually:
-# OUT_DIR=$SCRIPT_DIR/../../out/2017-07-04
+# OUT_DIR=$SCRIPT_DIR/../../out/performance/2018-07-04
 
 # Specifies where to find imported modules for python scripts
 export PYTHONPATH="$(realpath "${SCRIPT_DIR}/../..")"

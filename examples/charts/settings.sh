@@ -13,11 +13,11 @@ TO=$(date                     '+%Y-%m-01T00:00%:z')
 # FROM=2017-06-01T00:00:00.000+05:00
 # TO=2017-07-01T00:00:00.000+05:00
 
-# A default output files directory. It is specified as a last month like ../out/2017-06
-LAST_MONTH=`date --date='-1 month' +%Y-%m`
-OUT_DIR=${SCRIPT_DIR}/../../out/${LAST_MONTH}
+# A default output files directory. It is specified as a last month like .../2017-06
+LAST_MONTH=$(date --date='-1 month' '+%Y-%m')
+OUT_DIR=${SCRIPT_DIR}/../../out/${REPORT_NAME}/${LAST_MONTH}
 # or can be specified manually:
-# OUT_DIR=${SCRIPT_DIR}/../../out/2017-06
+# OUT_DIR=${SCRIPT_DIR}/../../out/charts/2017-06
 
 # The target number of points in a series after downsampling
 DOWNSAMPLE_TO=100
