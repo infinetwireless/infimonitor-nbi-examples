@@ -2,7 +2,7 @@ import unittest
 from examples.performance.make_xlsx_report import *
 
 
-class MakeExcelReport_format_values_Tests(unittest.TestCase):
+class MakeXlsxReport_format_values_Tests(unittest.TestCase):
     def test_plus_first_value(self):
         parameter = AggregatedValue()
 

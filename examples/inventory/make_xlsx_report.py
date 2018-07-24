@@ -198,10 +198,12 @@ def make_report(hosts, report_file):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-dir',
-                        help='directory with report data files: hosts.tsv, links.tsv, vectors.tsv',
+                        help='directory with report data files: hosts.tsv, hosts_interfaces.tsv,'
+                             ' hosts_interfaces_vectors. tsv hosts_parameters.tsv, interfaces_parameters.tsv,'
+                             ' vectors_parameters.tsv',
                         required=True)
     parser.add_argument('--report-file',
-                        help='path to xlsx report file',
+                        help='path to the xlsx report file',
                         default='inventory.xlsx')
     args = parser.parse_args()
 

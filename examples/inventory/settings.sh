@@ -6,7 +6,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 REPORT_NAME=inventory
 
-# A default output files directory. It is specified as a current date like .../2018-06-27
+# An output files directory. It is specified as a current date like .../2018-06-27
 TODAY=$(date '+%Y-%m-%d')
 OUT_DIR=${SCRIPT_DIR}/../../out/${REPORT_NAME}/${TODAY}
 # or can be specified manually:

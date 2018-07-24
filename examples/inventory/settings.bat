@@ -3,7 +3,7 @@ SET SCRIPT_DIR=%~dp0
 
 SET REPORT_NAME=inventory
 
-REM A default output files directory. It is specified as a current date like ...\2018-06-27
+REM An output files directory. It is specified as a current date like ...\2018-06-27
 python "%SCRIPT_DIR%\..\utilits\ms\wnd_date.py" --format "%%Y-%%m-%%d" > tmp
 SET /P TODAY=<tmp
 DEL tmp

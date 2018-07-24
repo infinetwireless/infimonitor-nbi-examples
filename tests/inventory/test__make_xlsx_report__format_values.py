@@ -4,7 +4,7 @@ from examples.inventory.make_xlsx_report import *
 IFACE_UUID = '079a412a-e77f-423e-a986-583cb6345626'
 PRF_IFACE_UUID = '08dbb75a-677e-4785-9bf0-bc255b756979'
 
-class MakeExcelReport_format_values_Tests(unittest.TestCase):
+class MakeXlsxReport_format_values_Tests(unittest.TestCase):
     def test_hostLabel_when_host_is_exists_and_activated(self):
         host = Host(True, True)
         host.add_parameter_value('hostLabel', 'Host1')

@@ -59,7 +59,7 @@ if __name__ == '__main__':
     group.add_argument('--page-size', type=int, default="1024",
                        help='Number of JSON objects in a single HTTP response')
     group.add_argument('--quantity-of-parts', type=int,
-                       help='Number of JSON objects in a single HTTP response')
+                       help='Number of parts on which the uploaded data is divided')
     args = parser.parse_args()
 
     url = reencode_query_string(args.url)
